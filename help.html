@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help Center - Task Manager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --accent: #1eb6f9;
+            --text-dark: #222;
+            --text-light: #fff;
+            --bg-light: #f8fafd;
+            --shadow: 0 8px 32px rgba(74, 144, 226, 0.15);
+            --success: #2ecc71;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+        
+        .navbar {
+            background: #fff;
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+        
+        .nav-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+        
+        .hero-section {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: white;
+        }
+        
+        .hero-section h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            font-weight: 300;
+        }
+        
+        .hero-section p {
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+        
+        .search-box {
+            max-width: 500px;
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            border: none;
+            border-radius: 2rem;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .search-box i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+        
+        .help-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+        
+        .help-categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+        
+        .category-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow);
+            text-align: center;
+            transition: transform 0.3s;
+            cursor: pointer;
+        }
+        
+        .category-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .category-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        
+        .category-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+        }
+        
+        .category-card p {
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+        
+        .category-card .article-count {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .faq-section {
+            background: white;
+            padding: 3rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 3rem;
+        }
+        
+        .faq-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            color: var(--primary);
+            text-align: center;
+        }
+        
+        .faq-item {
+            margin-bottom: 1rem;
+            border: 1px solid #eee;
+            border-radius: 0.5rem;
+        }
+        
+        .faq-question {
+            padding: 1.5rem;
+            background: #f8f9fa;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s;
+        }
+        
+        .faq-question:hover {
+            background: #e9ecef;
+        }
+        
+        .faq-answer {
+            padding: 1.5rem;
+            display: none;
+            border-top: 1px solid #eee;
+        }
+        
+        .faq-answer.active {
+            display: block;
+        }
+        
+        .faq-answer p {
+            margin-bottom: 1rem;
+        }
+        
+        .faq-answer ul {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .faq-answer li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .contact-support {
+            background: var(--primary);
+            color: white;
+            padding: 3rem;
+            border-radius: 1rem;
+            text-align: center;
+        }
+        
+        .contact-support h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .contact-support p {
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+        
+        .support-btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: white;
+            color: var(--primary);
+            text-decoration: none;
+            border-radius: 2rem;
+            font-weight: 600;
+            transition: transform 0.3s;
+        }
+        
+        .support-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        @media (max-width: 768px) {
+            .hero-section h1 {
+                font-size: 2rem;
+            }
+            .nav-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            .nav-links {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-content">
+            <div class="nav-brand">Bitrix24</div>
+            <div class="nav-links">
+                <a href="home.html">Home</a>
+                <a href="features.html">Features</a>
+                <a href="pricing.html">Pricing</a>
+                <a href="dashboard.html">Dashboard</a>
+                <a href="help.html">Help</a>
+                <a href="login.html">Login</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <h1>Help Center</h1>
+        <p>Find answers to your questions and learn how to get the most out of Bitrix24 Task Manager.</p>
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Search for help articles..." id="helpSearch">
+        </div>
+    </section>
+
+    <!-- Help Content -->
+    <div class="help-container">
+        <!-- Help Categories -->
+        <div class="help-categories">
+            <div class="category-card" onclick="showCategory('getting-started')">
+                <div class="category-icon">
+                    <i class="fas fa-rocket"></i>
+                </div>
+                <h3>Getting Started</h3>
+                <p>Learn the basics of using Bitrix24 Task Manager</p>
+                <div class="article-count">8 articles</div>
+            </div>
+            
+            <div class="category-card" onclick="showCategory('task-management')">
+                <div class="category-icon">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <h3>Task Management</h3>
+                <p>Master task creation, editing, and organization</p>
+                <div class="article-count">12 articles</div>
+            </div>
+            
+            <div class="category-card" onclick="showCategory('collaboration')">
+                <div class="category-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3>Team Collaboration</h3>
+                <p>Work effectively with your team members</p>
+                <div class="article-count">6 articles</div>
+            </div>
+            
+            <div class="category-card" onclick="showCategory('account')">
+                <div class="category-icon">
+                    <i class="fas fa-user-cog"></i>
+                </div>
+                <h3>Account & Settings</h3>
+                <p>Manage your account and customize preferences</p>
+                <div class="article-count">5 articles</div>
+            </div>
+            
+            <div class="category-card" onclick="showCategory('troubleshooting')">
+                <div class="category-icon">
+                    <i class="fas fa-tools"></i>
+                </div>
+                <h3>Troubleshooting</h3>
+                <p>Solve common issues and technical problems</p>
+                <div class="article-count">10 articles</div>
+            </div>
+            
+            <div class="category-card" onclick="showCategory('mobile')">
+                <div class="category-icon">
+                    <i class="fas fa-mobile-alt"></i>
+                </div>
+                <h3>Mobile App</h3>
+                <p>Use Bitrix24 on your mobile devices</p>
+                <div class="article-count">4 articles</div>
+            </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="faq-section">
+            <h2>Frequently Asked Questions</h2>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    How do I create my first task?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Creating your first task is easy:</p>
+                    <ul>
+                        <li>Click the "Add New Task" button on your dashboard</li>
+                        <li>Fill in the task title (required)</li>
+                        <li>Add a description if needed</li>
+                        <li>Set a due date</li>
+                        <li>Choose a category</li>
+                        <li>Click "Save Task"</li>
+                    </ul>
+                    <p>Your task will appear in your task list immediately.</p>
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Can I organize tasks by categories?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Yes! Bitrix24 Task Manager supports task categorization:</p>
+                    <ul>
+                        <li>Default categories include Work, Personal, and Shopping</li>
+                        <li>You can filter tasks by category using the dropdown filter</li>
+                        <li>Categories help you organize and find tasks quickly</li>
+                        <li>Each category has a distinct color for easy identification</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    How do I mark a task as completed?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>To mark a task as completed:</p>
+                    <ul>
+                        <li>Find the task in your task list</li>
+                        <li>Click the checkbox next to the task title</li>
+                        <li>The task will be marked as completed and crossed out</li>
+                        <li>You can uncheck it to mark it as incomplete again</li>
+                    </ul>
+                    <p>Completed tasks can be filtered using the status filter.</p>
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Is my data saved automatically?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Yes, your data is automatically saved:</p>
+                    <ul>
+                        <li>All tasks are saved to your browser's local storage</li>
+                        <li>Changes are saved immediately when you create, edit, or delete tasks</li>
+                        <li>Your tasks will persist between browser sessions</li>
+                        <li>For cloud sync, upgrade to a paid plan</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Can I search for specific tasks?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Absolutely! Use the search functionality:</p>
+                    <ul>
+                        <li>Type in the search bar at the top of your dashboard</li>
+                        <li>Search works for both task titles and descriptions</li>
+                        <li>Results update in real-time as you type</li>
+                        <li>Combine search with filters for more precise results</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    What browsers are supported?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Bitrix24 Task Manager works on all modern browsers:</p>
+                    <ul>
+                        <li>Chrome (recommended)</li>
+                        <li>Firefox</li>
+                        <li>Safari</li>
+                        <li>Microsoft Edge</li>
+                        <li>Opera</li>
+                    </ul>
+                    <p>For the best experience, keep your browser updated to the latest version.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Support -->
+        <div class="contact-support">
+            <h2>Still Need Help?</h2>
+            <p>Can't find what you're looking for? Our support team is here to help you succeed.</p>
+            <a href="contact.html" class="support-btn">Contact Support</a>
+        </div>
+    </div>
+
+    <script>
+        function toggleFaq(element) {
+            const answer = element.nextElementSibling;
+            const icon = element.querySelector('i');
+            
+            if (answer.classList.contains('active')) {
+                answer.classList.remove('active');
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+            } else {
+                // Close all other FAQs
+                document.querySelectorAll('.faq-answer').forEach(ans => ans.classList.remove('active'));
+                document.querySelectorAll('.faq-question i').forEach(ic => {
+                    ic.classList.remove('fa-chevron-up');
+                    ic.classList.add('fa-chevron-down');
+                });
+                
+                // Open clicked FAQ
+                answer.classList.add('active');
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+            }
+        }
+        
+        function showCategory(category) {
+            // This would typically navigate to a category-specific page
+            alert(`Showing articles for: ${category.replace('-', ' ')}`);
+        }
+        
+        // Search functionality
+        document.getElementById('helpSearch').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            // This would typically filter help articles
+            console.log('Searching for:', searchTerm);
+        });
+    </script>
+</body>
+</html>
