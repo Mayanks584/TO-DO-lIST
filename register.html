@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Task Manager</title>
+    <style>
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(120deg, #e3f1fd 0%, #b3e0ff 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        .register-container {
+            background: #fff;
+            padding: 2.5rem 2rem 2rem 2rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 8px 32px rgba(74, 144, 226, 0.15);
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0;
+            transform: translateY(40px);
+            animation: fadeInUp 0.9s cubic-bezier(.6,1.5,.5,1) 0.2s forwards;
+        }
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .register-logo {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #4a90e2;
+            margin-bottom: 0.5rem;
+            letter-spacing: 1px;
+            text-align: center;
+            width: 100%;
+        }
+        .register-title {
+            font-size: 1.2rem;
+            color: #333;
+            margin-bottom: 2rem;
+            text-align: center;
+            width: 100%;
+        }
+        .register-form {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+        .register-form label {
+            font-size: 1rem;
+            color: #444;
+            margin-bottom: 0.3rem;
+        }
+        .register-form input[type="email"],
+        .register-form input[type="password"] {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 0.8rem 1rem;
+            border-radius: 0.7rem;
+            border: 1px solid #c7e0f7;
+            font-size: 1rem;
+            background: #f8fafd;
+            transition: border 0.2s;
+            display: block;
+        }
+        .register-form input:focus {
+            border: 1.5px solid #4a90e2;
+            outline: none;
+        }
+        .register-btn {
+            margin-top: 0.5rem;
+            padding: 0.9rem 0;
+            border-radius: 2rem;
+            border: none;
+            background: #4a90e2;
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 12px rgba(74,144,226,0.10);
+            transition: box-shadow 0.25s, background 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .register-btn::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, #b3e0ff 0%, #4a90e2 80%, transparent 100%);
+            opacity: 0.5;
+            transform: translate(-50%, -50%) scale(0.7);
+            transition: width 0.3s, height 0.3s, opacity 0.3s;
+            z-index: 0;
+        }
+        .register-btn:hover::before {
+            width: 220%;
+            height: 400%;
+            opacity: 0.7;
+        }
+        .register-btn:hover {
+            box-shadow: 0 0 32px 8px #b3e0ff, 0 2px 12px rgba(74,144,226,0.18);
+            background: #357abd;
+        }
+        .register-btn span {
+            position: relative;
+            z-index: 1;
+        }
+        .login-link {
+            text-align: center;
+            font-size: 0.95rem;
+            margin-top: 1rem;
+        }
+        .login-link a {
+            color: #4a90e2;
+            text-decoration: none;
+            transition: text-decoration 0.2s;
+        }
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 500px) {
+            .register-container {
+                padding: 1.2rem 0.5rem 1.5rem 0.5rem;
+                border-radius: 0.7rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-logo">Bitrix24</div>
+        <div class="register-title">Create your account</div>
+        <form class="register-form" autocomplete="off" id="registerForm">
+            <div>
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="Enter your email" required>
+            </div>
+            <div>
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Enter your password (min 6 characters)" required>
+            </div>
+            <div>
+                <label for="confirmPassword">Confirm Password</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm your password" required>
+            </div>
+            <button type="submit" class="register-btn"><span>Register</span></button>
+        </form>
+        <div id="message" style="margin-top: 1rem; text-align: center; font-size: 0.9rem;"></div>
+        <div class="login-link">
+            Already have an account? <a href="login.html">Sign in</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const messageDiv = document.getElementById('message');
+            const submitBtn = document.querySelector('.register-btn');
+            
+            // Validate passwords match
+            if (password !== confirmPassword) {
+                messageDiv.style.color = '#dc3545';
+                messageDiv.innerHTML = 'Passwords do not match';
+                return;
+            }
+            
+            // Validate password length
+            if (password.length < 6) {
+                messageDiv.style.color = '#dc3545';
+                messageDiv.innerHTML = 'Password must be at least 6 characters long';
+                return;
+            }
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span>Creating account...</span>';
+            messageDiv.innerHTML = '';
+            messageDiv.style.color = '';
+            
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    messageDiv.style.color = '#28a745';
+                    messageDiv.innerHTML = 'Account created successfully! Redirecting to login...';
+                    
+                    // Redirect to login page
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 2000);
+                } else {
+                    messageDiv.style.color = '#dc3545';
+                    messageDiv.innerHTML = data.message || 'Registration failed';
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                messageDiv.style.color = '#dc3545';
+                messageDiv.innerHTML = 'Network error. Please try again.';
+            } finally {
+                // Reset button state
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span>Register</span>';
+            }
+        });
+    </script>
+</body>
+</html> 

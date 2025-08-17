@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Task Manager</title>
+    <style>
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(120deg, #e3f1fd 0%, #b3e0ff 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        .login-container {
+            background: #fff;
+            padding: 2.5rem 2rem 2rem 2rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 8px 32px rgba(74, 144, 226, 0.15);
+            width: 100%;
+            max-width: 370px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0;
+            transform: translateY(40px);
+            animation: fadeInUp 0.9s cubic-bezier(.6,1.5,.5,1) 0.2s forwards;
+        }
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .login-logo {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #4a90e2;
+            margin-bottom: 0.5rem;
+            letter-spacing: 1px;
+            text-align: center;
+            width: 100%;
+        }
+        .login-title {
+            font-size: 1.2rem;
+            color: #333;
+            margin-bottom: 2rem;
+            text-align: center;
+            width: 100%;
+        }
+        .login-form {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+        .login-form label {
+            font-size: 1rem;
+            color: #444;
+            margin-bottom: 0.3rem;
+        }
+        .login-form input[type="email"],
+        .login-form input[type="password"] {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 0.8rem 1rem;
+            border-radius: 0.7rem;
+            border: 1px solid #c7e0f7;
+            font-size: 1rem;
+            background: #f8fafd;
+            transition: border 0.2s;
+            display: block;
+        }
+        .login-form input:focus {
+            border: 1.5px solid #4a90e2;
+            outline: none;
+        }
+        .login-btn {
+            margin-top: 0.5rem;
+            padding: 0.9rem 0;
+            border-radius: 2rem;
+            border: none;
+            background: #4a90e2;
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 12px rgba(74,144,226,0.10);
+            transition: box-shadow 0.25s, background 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .login-btn::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, #b3e0ff 0%, #4a90e2 80%, transparent 100%);
+            opacity: 0.5;
+            transform: translate(-50%, -50%) scale(0.7);
+            transition: width 0.3s, height 0.3s, opacity 0.3s;
+            z-index: 0;
+        }
+        .login-btn:hover::before {
+            width: 220%;
+            height: 400%;
+            opacity: 0.7;
+        }
+        .login-btn:hover {
+            box-shadow: 0 0 32px 8px #b3e0ff, 0 2px 12px rgba(74,144,226,0.18);
+            background: #357abd;
+        }
+        .login-btn span {
+            position: relative;
+            z-index: 1;
+        }
+        .login-form .forgot {
+            text-align: right;
+            font-size: 0.95rem;
+            margin-top: -0.8rem;
+            margin-bottom: 0.5rem;
+        }
+        .login-form .forgot a {
+            color: #4a90e2;
+            text-decoration: none;
+            transition: text-decoration 0.2s;
+        }
+        .login-form .forgot a:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 500px) {
+            .login-container {
+                padding: 1.2rem 0.5rem 1.5rem 0.5rem;
+                border-radius: 0.7rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-logo">Bitrix24</div>
+        <div class="login-title">Sign in to your account</div>
+        <form class="login-form" autocomplete="off" id="loginForm">
+            <div>
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="Enter your email" required>
+            </div>
+            <div>
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Enter your password" required>
+            </div>
+            <div class="forgot">
+                <a href="#">Forgot password?</a>
+            </div>
+            <button type="submit" class="login-btn"><span>Login</span></button>
+        </form>
+        <div id="message" style="margin-top: 1rem; text-align: center; font-size: 0.9rem;"></div>
+        <div class="login-link" style="text-align: center; font-size: 0.95rem; margin-top: 1rem;">
+            Don't have an account? <a href="register.html" style="color: #4a90e2; text-decoration: none;">Sign up</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const messageDiv = document.getElementById('message');
+            const submitBtn = document.querySelector('.login-btn');
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span>Logging in...</span>';
+            messageDiv.innerHTML = '';
+            messageDiv.style.color = '';
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    messageDiv.style.color = '#28a745';
+                    messageDiv.innerHTML = 'Login successful! Redirecting...';
+                    
+                    // Store user info in localStorage (optional)
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    
+                    // Redirect to dashboard or home page
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1500);
+                } else {
+                    messageDiv.style.color = '#dc3545';
+                    messageDiv.innerHTML = data.message || 'Login failed';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                messageDiv.style.color = '#dc3545';
+                messageDiv.innerHTML = 'Network error. Please try again.';
+            } finally {
+                // Reset button state
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span>Login</span>';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitrix24 - Free Online Task Manager</title>
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --accent: #1eb6f9;
+            --text-dark: #222;
+            --text-light: #fff;
+            --bg-light: #f8fafd;
+            --shadow: 0 8px 32px rgba(74, 144, 226, 0.15);
+        }
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .main-hero {
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            width: 100vw;
+            min-height: 100vh;
+            background: linear-gradient(90deg, #fff 60%, #e3f1fd 100%);
+        }
+        .hero-left {
+            flex: 1 1 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 5vw;
+            max-width: 650px;
+            min-width: 340px;
+        }
+        .brand {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: 1px;
+            margin-bottom: 2.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3em;
+        }
+        .brand .clock {
+            font-size: 1.2rem;
+            color: #888;
+        }
+        .hero-title {
+            font-size: 3.2rem;
+            font-weight: 300;
+            line-height: 1.1;
+            margin-bottom: 1.2rem;
+            letter-spacing: -1px;
+        }
+        .hero-title .free {
+            color: var(--primary);
+            font-weight: 400;
+        }
+        .hero-title .img-bubble {
+            display: inline-block;
+            vertical-align: middle;
+            background: var(--accent);
+            border-radius: 2.5rem;
+            padding: 0.2em 0.7em;
+            margin: 0 0.2em;
+        }
+        .hero-title .img-bubble img {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #fff;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 8px rgba(30,182,249,0.08);
+        }
+        .hero-desc {
+            font-size: 1.18rem;
+            margin-bottom: 2.2rem;
+            color: #444;
+            max-width: 90%;
+        }
+        .hero-btn {
+            display: inline-block;
+            padding: 1rem 2.5rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-light);
+            background: var(--primary);
+            border: none;
+            border-radius: 2.5rem;
+            box-shadow: 0 2px 12px rgba(74,144,226,0.10);
+            cursor: pointer;
+            transition: box-shadow 0.25s, background 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-btn::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, #b3e0ff 0%, #4a90e2 80%, transparent 100%);
+            opacity: 0.5;
+            transform: translate(-50%, -50%) scale(0.7);
+            transition: width 0.3s, height 0.3s, opacity 0.3s;
+            z-index: 0;
+        }
+        .hero-btn:hover::before {
+            width: 220%;
+            height: 400%;
+            opacity: 0.7;
+        }
+        .hero-btn:hover {
+            box-shadow: 0 0 32px 8px #b3e0ff, 0 2px 12px rgba(74,144,226,0.18);
+            background: #357abd;
+        }
+        .hero-btn span {
+            position: relative;
+            z-index: 1;
+        }
+        /* Right Side Image */
+        .hero-right {
+            flex: 1 1 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            min-width: 350px;
+            background: linear-gradient(180deg, #e3f1fd 60%, #b3e0ff 100%);
+            border-top-left-radius: 80px;
+            border-bottom-left-radius: 80px;
+            overflow: hidden;
+        }
+        .hero-img-container {
+            position: relative;
+            width: 90%;
+            max-width: 600px;
+            min-width: 320px;
+            margin: 0 auto;
+            box-shadow: var(--shadow);
+            border-radius: 2.5rem;
+            background: #fff;
+            overflow: hidden;
+        }
+        .hero-img-container img {
+            width: 100%;
+            display: block;
+            border-radius: 2.5rem;
+        }
+        /* Animations */
+        .slide-down {
+            opacity: 0;
+            transform: translateY(-80px);
+            animation: slideDown 1.1s cubic-bezier(.6,1.5,.5,1) 0.2s forwards;
+        }
+        @keyframes slideDown {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .slide-left-fade {
+            opacity: 0;
+            transform: translateX(-60px);
+            animation: slideLeftFade 1.1s cubic-bezier(.6,1.5,.5,1) 0.3s forwards;
+        }
+        @keyframes slideLeftFade {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        .fade-in {
+            opacity: 0;
+            animation: fadeIn 1.1s cubic-bezier(.6,1.5,.5,1) 0.7s forwards;
+        }
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+        @media (max-width: 900px) {
+            .main-hero {
+                flex-direction: column;
+                min-height: unset;
+                height: auto;
+            }
+            .hero-left, .hero-right {
+                max-width: 100vw;
+                min-width: 0;
+                border-radius: 0;
+                padding: 2.5vw 4vw;
+            }
+            .hero-img-container {
+                min-width: 0;
+                width: 100%;
+            }
+        }
+        @media (max-width: 600px) {
+            .hero-title {
+                font-size: 2.1rem;
+            }
+            .brand {
+                font-size: 1.3rem;
+            }
+            .hero-left {
+                padding: 1.5rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-hero">
+        <div class="hero-left">
+            <div class="brand slide-left-fade">
+                <span style="color: var(--primary);">Bitrix24</span>
+                <span class="clock">&#128337;</span>
+            </div>
+            <div class="hero-title slide-left-fade">
+                <span class="free">FREE</span>
+                <span class="img-bubble"><img src="https://randomuser.me/api/portraits/women/44.jpg" alt="woman"></span>
+                <br>
+                ONLINE TASK<br>
+                MANAGER
+                <span class="img-bubble"><img src="https://randomuser.me/api/portraits/men/32.jpg" alt="man"></span>
+            </div>
+            <div class="hero-desc slide-left-fade">
+                Organize and manage your team like a boss with Bitrix24, a free task management tool packing more capabilities than you can imagine.
+            </div>
+            <button class="hero-btn fade-in" id="get-started-btn"><span>Get Started</span></button>
+        </div>
+        <div class="hero-right">
+            <div class="hero-img-container slide-down">
+                <img src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80" alt="Modern Task Manager Dashboard">
+            </div>
+        </div>
+    </div>
+    <script>
+        // On page load, trigger entrance animations
+        window.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.slide-left-fade').forEach(function(el, i) {
+                el.style.animationDelay = (0.2 + i * 0.12) + 's';
+                el.classList.add('animated');
+            });
+            document.querySelectorAll('.fade-in').forEach(function(el) {
+                el.classList.add('animated');
+            });
+            document.querySelectorAll('.slide-down').forEach(function(el) {
+                el.classList.add('animated');
+            });
+            // Add click event for Get Started button
+            var btn = document.getElementById('get-started-btn');
+            if (btn) {
+                btn.addEventListener('click', function() {
+                    window.location.href = 'register.html';
+                });
+            }
+        });
+    </script>
+</body>
+</html>
