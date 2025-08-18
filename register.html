@@ -207,11 +207,11 @@
                 
                 if (data.success) {
                     messageDiv.style.color = '#28a745';
-                    messageDiv.innerHTML = 'Account created successfully! Redirecting to login...';
+                    messageDiv.innerHTML = 'Account created successfully! Redirecting to dashboard...';
                     
-                    // Redirect to login page
+                    // Redirect to dashboard
                     setTimeout(() => {
-                        window.location.href = '/login';
+                        window.location.href = 'dashboard.html';
                     }, 2000);
                 } else {
                     messageDiv.style.color = '#dc3545';
