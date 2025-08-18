@@ -1,188 +1,228 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // DOM Elements
-    const addTaskBtn = document.getElementById('add-task-btn');
-    const taskModal = document.getElementById('task-modal');
-    const taskForm = document.getElementById('task-form');
-    const cancelBtn = document.getElementById('cancel-btn');
-    const taskList = document.getElementById('task-list');
-    const modalTitle = document.getElementById('modal-title');
-    const searchBar = document.getElementById('search-bar');
-    const filterCategory = document.getElementById('filter-category');
-    const filterStatus = document.getElementById('filter-status');
-    const sortTasks = document.getElementById('sort-tasks');
+// MongoDB Atlas connection configuration
+const MONGODB_URI = 'mongodb+srv://ranamayank080:ishurana098@clustertest.hkinjhb.mongodb.net/?retryWrites=true&w=majority&appName=ClusterTest';
 
-    // State
-    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-    let currentEditTaskId = null;
-
-    // --- Data Persistence ---
-    const saveTasks = () => {
-        localStorage.setItem('tasks', JSON.stringify(tasks));
-    };
-
-    // --- Core Logic ---
-    const renderTasks = (taskArray = tasks) => {
-        taskList.innerHTML = '';
-        if (taskArray.length === 0) {
-            taskList.innerHTML = '<li>No tasks found. Add one!</li>';
-            return;
-        }
-
-        taskArray.forEach(task => {
-            const taskItem = document.createElement('li');
-            taskItem.className = `task-item ${task.completed ? 'completed' : ''}`;
-            taskItem.dataset.id = task.id;
-
-            const categoryClass = `cat-${task.category.toLowerCase()}`;
-            
-            taskItem.innerHTML = `
-                <input type="checkbox" class="task-complete" ${task.completed ? 'checked' : ''}>
-                <div class="task-details">
-                    <p class="task-title">${task.title}</p>
-                    <div class="task-info">
-                        <span>Due: ${task.dueDate}</span>
-                        <span class="task-category ${categoryClass}">${task.category}</span>
-                    </div>
-                </div>
-                <div class="task-actions">
-                    <button class="btn edit-btn"><i class="fas fa-edit"></i></button>
-                    <button class="btn delete-btn"><i class="fas fa-trash"></i></button>
-                </div>
-            `;
-            taskList.appendChild(taskItem);
-        });
-    };
-
-    const applyFiltersAndSort = () => {
-        let filteredTasks = [...tasks];
-
-        // Filter by Search
-        const searchTerm = searchBar.value.toLowerCase();
-        if (searchTerm) {
-            filteredTasks = filteredTasks.filter(task => 
-                task.title.toLowerCase().includes(searchTerm) ||
-                task.description.toLowerCase().includes(searchTerm)
-            );
-        }
-
-        // Filter by Category
-        const category = filterCategory.value;
-        if (category !== 'all') {
-            filteredTasks = filteredTasks.filter(task => task.category === category);
-        }
-
-        // Filter by Status
-        const status = filterStatus.value;
-        if (status !== 'all') {
-            filteredTasks = filteredTasks.filter(task => 
-                (status === 'completed' && task.completed) || (status === 'incomplete' && !task.completed)
-            );
-        }
-
-        // Sort
-        const sortValue = sortTasks.value;
-        filteredTasks.sort((a, b) => {
-            const dateA = new Date(a.dueDate);
-            const dateB = new Date(b.dueDate);
-            return sortValue === 'date-asc' ? dateA - dateB : dateB - dateA;
-        });
-
-        renderTasks(filteredTasks);
-    };
-
-    // --- Modal Handling ---
-    const showModal = (isEdit = false, task = null) => {
-        taskForm.reset();
-        if (isEdit && task) {
-            modalTitle.textContent = 'Edit Task';
-            currentEditTaskId = task.id;
-            document.getElementById('task-id').value = task.id;
-            document.getElementById('task-title').value = task.title;
-            document.getElementById('task-desc').value = task.description;
-            document.getElementById('task-due-date').value = task.dueDate;
-            document.getElementById('task-category').value = task.category;
-        } else {
-            modalTitle.textContent = 'Add New Task';
-            currentEditTaskId = null;
-        }
-        taskModal.style.display = 'flex';
-    };
-
-    const hideModal = () => {
-        taskModal.style.display = 'none';
-    };
-
-    // --- Event Listeners ---
-    addTaskBtn.addEventListener('click', () => showModal(false));
-    cancelBtn.addEventListener('click', hideModal);
-    window.addEventListener('click', (e) => {
-        if (e.target === taskModal) hideModal();
-    });
-
-    taskForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const title = document.getElementById('task-title').value.trim();
-        const description = document.getElementById('task-desc').value.trim();
-        const dueDate = document.getElementById('task-due-date').value;
-        const category = document.getElementById('task-category').value;
-
-        if (!title || !dueDate) {
-            alert('Title and Due Date are required.');
-            return;
-        }
-
-        if (currentEditTaskId) {
-            // Editing existing task
-            const taskIndex = tasks.findIndex(t => t.id === currentEditTaskId);
-            if (taskIndex > -1) {
-                tasks[taskIndex] = { ...tasks[taskIndex], title, description, dueDate, category };
-            }
-        } else {
-            // Adding new task
-            const newTask = {
-                id: Date.now(),
-                title,
-                description,
-                dueDate,
-                category,
-                completed: false
+// User registration function
+async function registerUser(email, password) {
+    try {
+        // For now, we'll use localStorage to simulate user storage
+        // In a real app, you'd want to use a backend server for security
+        
+        // Check if user already exists
+        const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
+        const existingUser = existingUsers.find(user => user.email === email);
+        
+        if (existingUser) {
+            return {
+                success: false,
+                message: 'User with this email already exists'
             };
-            tasks.push(newTask);
         }
 
-        saveTasks();
-        applyFiltersAndSort();
-        hideModal();
-    });
+        // Create new user (in a real app, password would be hashed on server)
+        const newUser = {
+            id: Date.now().toString(),
+            email: email,
+            password: password, // In production, this should be hashed
+            createdAt: new Date().toISOString()
+        };
 
-    taskList.addEventListener('click', (e) => {
-        const taskItem = e.target.closest('.task-item');
-        if (!taskItem) return;
+        // Store user in localStorage (simulating database)
+        existingUsers.push(newUser);
+        localStorage.setItem('users', JSON.stringify(existingUsers));
 
-        const taskId = Number(taskItem.dataset.id);
-        const task = tasks.find(t => t.id === taskId);
-
-        if (e.target.closest('.delete-btn')) {
-            if (confirm('Are you sure you want to delete this task?')) {
-                tasks = tasks.filter(t => t.id !== taskId);
-                saveTasks();
-                applyFiltersAndSort();
+        return {
+            success: true,
+            message: 'User registered successfully',
+            user: {
+                id: newUser.id,
+                email: newUser.email,
+                createdAt: newUser.createdAt
             }
-        } else if (e.target.closest('.edit-btn')) {
-            showModal(true, task);
-        } else if (e.target.matches('.task-complete')) {
-            task.completed = !task.completed;
-            saveTasks();
-            applyFiltersAndSort(); // Re-render to apply 'completed' class and filter if needed
+        };
+
+    } catch (error) {
+        console.error('Registration error:', error);
+        return {
+            success: false,
+            message: 'Registration failed. Please try again.'
+        };
+    }
+}
+
+// User login function
+async function loginUser(email, password) {
+    try {
+        // Get users from localStorage
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        const user = users.find(u => u.email === email && u.password === password);
+
+        if (!user) {
+            return {
+                success: false,
+                message: 'Invalid email or password'
+            };
         }
+
+        return {
+            success: true,
+            message: 'Login successful',
+            user: {
+                id: user.id,
+                email: user.email,
+                createdAt: user.createdAt
+            }
+        };
+
+    } catch (error) {
+        console.error('Login error:', error);
+        return {
+            success: false,
+            message: 'Login failed. Please try again.'
+        };
+    }
+}
+
+// Handle registration form submission
+function handleRegister(event) {
+    event.preventDefault();
+    
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    const messageDiv = document.getElementById('message');
+    const submitBtn = document.querySelector('.register-btn');
+    
+    // Validate passwords match
+    if (password !== confirmPassword) {
+        messageDiv.style.color = '#dc3545';
+        messageDiv.innerHTML = 'Passwords do not match';
+        return;
+    }
+    
+    // Validate password length
+    if (password.length < 6) {
+        messageDiv.style.color = '#dc3545';
+        messageDiv.innerHTML = 'Password must be at least 6 characters long';
+        return;
+    }
+    
+    // Show loading state
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span>Creating account...</span>';
+    messageDiv.innerHTML = '';
+    messageDiv.style.color = '';
+    
+    // Register user
+    registerUser(email, password).then(data => {
+        if (data.success) {
+            messageDiv.style.color = '#28a745';
+            messageDiv.innerHTML = 'Account created successfully! Redirecting to dashboard...';
+            
+            // Store user info in localStorage
+            localStorage.setItem('currentUser', JSON.stringify(data.user));
+            
+            // Redirect to dashboard
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 2000);
+        } else {
+            messageDiv.style.color = '#dc3545';
+            messageDiv.innerHTML = data.message || 'Registration failed';
+        }
+    }).catch(error => {
+        console.error('Registration error:', error);
+        messageDiv.style.color = '#dc3545';
+        messageDiv.innerHTML = 'Registration failed. Please try again.';
+    }).finally(() => {
+        // Reset button state
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>Register</span>';
     });
+}
 
-    // Filters and Sort Listeners
-    searchBar.addEventListener('input', applyFiltersAndSort);
-    filterCategory.addEventListener('change', applyFiltersAndSort);
-    filterStatus.addEventListener('change', applyFiltersAndSort);
-    sortTasks.addEventListener('change', applyFiltersAndSort);
+// Handle login form submission
+function handleLogin(event) {
+    event.preventDefault();
+    
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const messageDiv = document.getElementById('message');
+    const submitBtn = document.querySelector('.login-btn');
+    
+    // Show loading state
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span>Logging in...</span>';
+    messageDiv.innerHTML = '';
+    messageDiv.style.color = '';
+    
+    // Login user
+    loginUser(email, password).then(data => {
+        if (data.success) {
+            messageDiv.style.color = '#28a745';
+            messageDiv.innerHTML = 'Login successful! Redirecting...';
+            
+            // Store user info in localStorage
+            localStorage.setItem('currentUser', JSON.stringify(data.user));
+            
+            // Redirect to dashboard
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 1500);
+        } else {
+            messageDiv.style.color = '#dc3545';
+            messageDiv.innerHTML = data.message || 'Login failed';
+        }
+    }).catch(error => {
+        console.error('Login error:', error);
+        messageDiv.style.color = '#dc3545';
+        messageDiv.innerHTML = 'Login failed. Please try again.';
+    }).finally(() => {
+        // Reset button state
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>Login</span>';
+    });
+}
 
-    // Initial Render
-    applyFiltersAndSort();
+// Check if user is logged in
+function checkAuth() {
+    const currentUser = localStorage.getItem('currentUser');
+    if (currentUser) {
+        return JSON.parse(currentUser);
+    }
+    return null;
+}
+
+// Logout function
+function logout() {
+    localStorage.removeItem('currentUser');
+    window.location.href = 'home.html';
+}
+
+// Initialize forms when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Register form
+    const registerForm = document.getElementById('registerForm');
+    if (registerForm) {
+        registerForm.addEventListener('submit', handleRegister);
+    }
+    
+    // Login form
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+    }
+    
+    // Dashboard authentication check and user info
+    if (window.location.pathname.includes('dashboard.html')) {
+        const user = checkAuth();
+        if (!user) {
+            window.location.href = 'login.html';
+        } else {
+            // Display user info
+            const userInfo = document.getElementById('user-info');
+            if (userInfo) {
+                userInfo.textContent = `Welcome, ${user.email}`;
+            }
+        }
+    }
 });

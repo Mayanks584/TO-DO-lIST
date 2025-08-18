@@ -164,57 +164,6 @@
         </div>
     </div>
 
-    <script>
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const messageDiv = document.getElementById('message');
-            const submitBtn = document.querySelector('.login-btn');
-            
-            // Show loading state
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span>Logging in...</span>';
-            messageDiv.innerHTML = '';
-            messageDiv.style.color = '';
-            
-            try {
-                const response = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ email, password })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    messageDiv.style.color = '#28a745';
-                    messageDiv.innerHTML = 'Login successful! Redirecting...';
-                    
-                    // Store user info in localStorage (optional)
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    
-                    // Redirect to dashboard
-                    setTimeout(() => {
-                        window.location.href = 'dashboard.html';
-                    }, 1500);
-                } else {
-                    messageDiv.style.color = '#dc3545';
-                    messageDiv.innerHTML = data.message || 'Login failed';
-                }
-            } catch (error) {
-                console.error('Login error:', error);
-                messageDiv.style.color = '#dc3545';
-                messageDiv.innerHTML = 'Network error. Please try again.';
-            } finally {
-                // Reset button state
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<span>Login</span>';
-            }
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
