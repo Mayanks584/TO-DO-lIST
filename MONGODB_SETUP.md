@@ -77,7 +77,10 @@ You should see: "It looks like you are trying to access MongoDB over HTTP on the
 
 ## Start Your Application
 
-1. **Start MongoDB** (using one of the methods above)
+1. **Set up environment variables**:
+   - Copy `env.example` to `.env`
+   - The MongoDB Atlas connection string is already configured
+
 2. **Start the server**:
    ```cmd
    # Option 1: Use the batch file
@@ -92,9 +95,9 @@ You should see: "It looks like you are trying to access MongoDB over HTTP on the
 
 ## Database Information
 
-- **Database**: `taskmanager`
+- **Database**: MongoDB Atlas Cloud Database
 - **Collection**: `users`
-- **Connection String**: `mongodb://localhost:27017/taskmanager`
+- **Connection String**: `mongodb+srv://ranamayank080:ishurana098@clustertest.hkinjhb.mongodb.net/?retryWrites=true&w=majority&appName=ClusterTest`
 
 ## Test Registration
 
@@ -106,14 +109,20 @@ You should see: "It looks like you are trying to access MongoDB over HTTP on the
 
 If successful, you should see "Account created successfully!" and be redirected to the dashboard.
 
-## View Data in MongoDB
+## View Data in MongoDB Atlas
 
 To see the stored user data:
 
-```cmd
-mongo
-use taskmanager
-db.users.find()
-```
+1. **Access MongoDB Atlas Dashboard**:
+   - Go to https://cloud.mongodb.com
+   - Sign in with your credentials
+   - Navigate to your cluster: `ClusterTest`
+   - Click on "Browse Collections"
+   - Look for the `users` collection
 
-This will show all registered users in your database.
+2. **Alternative: Use MongoDB Compass**:
+   - Download MongoDB Compass
+   - Connect using your Atlas connection string
+   - Navigate to the `users` collection
+
+This will show all registered users in your cloud database.

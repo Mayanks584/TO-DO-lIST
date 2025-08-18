@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
@@ -13,11 +14,13 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, '..')));
 
 // MongoDB Connection
-mongoose.connect('mongodb://localhost:27017/taskmanager', {
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://ranamayank080:ishurana098@clustertest.hkinjhb.mongodb.net/?retryWrites=true&w=majority&appName=ClusterTest';
+
+mongoose.connect(MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
 })
-.then(() => console.log('Connected to MongoDB'))
+.then(() => console.log('Connected to MongoDB Atlas'))
 .catch(err => console.error('MongoDB connection error:', err));
 
 // User Schema
@@ -177,5 +180,5 @@ app.get('/dashboard.html', (req, res) => {
 // Start server
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
-    console.log(`MongoDB connection string: mongodb://localhost:27017/taskmanager`);
+    console.log(`MongoDB Atlas connected successfully`);
 });

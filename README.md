@@ -28,35 +28,33 @@ npm install
 
 ### 2. MongoDB Setup
 
-#### Option A: Local MongoDB
+#### MongoDB Atlas (Cloud) - CONFIGURED ✅
+The application is now configured to use MongoDB Atlas cloud database.
+
+1. **Connection String**: Already configured in the application
+2. **Database**: `ClusterTest` cluster
+3. **Collections**: `users` (for user data)
+
+#### Option A: Local MongoDB (Alternative)
+If you prefer to use local MongoDB:
 1. Install MongoDB Community Server from [mongodb.com](https://www.mongodb.com/try/download/community)
 2. Start MongoDB service
-3. The application will connect to `mongodb://localhost:27017/taskmanager`
-
-#### Option B: MongoDB Atlas (Cloud)
-1. Create a free account at [MongoDB Atlas](https://www.mongodb.com/atlas)
-2. Create a new cluster
-3. Get your connection string
-4. Create a `.env` file in the project root with:
-   ```
-   MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/taskmanager
-   PORT=3000
-   ```
+3. Update the connection string in `server/server.js` to: `mongodb://localhost:27017/taskmanager`
 
 ### 3. Environment Variables
 
-Create a `.env` file in the project root:
+The application is pre-configured with MongoDB Atlas. If you want to use environment variables:
 
-```env
-# For local MongoDB
-MONGODB_URI=mongodb://localhost:27017/taskmanager
+1. Copy `env.example` to `.env`:
+   ```bash
+   cp env.example .env
+   ```
 
-# For MongoDB Atlas (replace with your connection string)
-# MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/taskmanager
-
-# Server Port
-PORT=3000
-```
+2. The `.env` file should contain:
+   ```env
+   MONGODB_URI=mongodb+srv://ranamayank080:ishurana098@clustertest.hkinjhb.mongodb.net/?retryWrites=true&w=majority&appName=ClusterTest
+   PORT=3000
+   ```
 
 ### 4. Start the Application
 
