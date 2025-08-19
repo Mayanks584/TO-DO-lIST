@@ -1,150 +1,128 @@
 # Task Manager with MongoDB
 
-A modern task management application with user authentication using MongoDB.
+A modern task management application built with Node.js, Express, MongoDB, and vanilla JavaScript.
 
 ## Features
 
-- User registration and login
-- Secure password hashing with bcrypt
+- User registration and authentication
+- Task creation, editing, and deletion
+- Task categorization and filtering
+- Responsive design
 - MongoDB database integration
-- Modern, responsive UI
-- Express.js backend API
+- Secure password hashing
 
 ## Prerequisites
 
-Before running this application, make sure you have:
+- Node.js (v14 or higher)
+- MongoDB Atlas account
+- npm or yarn
 
-1. **Node.js** (version 14 or higher)
-2. **MongoDB** (local installation or MongoDB Atlas account)
-3. **npm** (comes with Node.js)
+## Installation
 
-## Setup Instructions
-
-### 1. Install Dependencies
-
-```bash
-npm install
-```
-
-### 2. MongoDB Setup
-
-#### MongoDB Atlas (Cloud) - CONFIGURED ✅
-The application is now configured to use MongoDB Atlas cloud database.
-
-1. **Connection String**: Already configured in the application
-2. **Database**: `ClusterTest` cluster
-3. **Collections**: `users` (for user data)
-
-#### Option A: Local MongoDB (Alternative)
-If you prefer to use local MongoDB:
-1. Install MongoDB Community Server from [mongodb.com](https://www.mongodb.com/try/download/community)
-2. Start MongoDB service
-3. Update the connection string in `server/server.js` to: `mongodb://localhost:27017/taskmanager`
-
-### 3. Environment Variables
-
-The application is pre-configured with MongoDB Atlas. If you want to use environment variables:
-
-1. Copy `env.example` to `.env`:
+1. **Clone the repository**
    ```bash
-   cp env.example .env
+   git clone https://github.com/Mayanks584/TO--DO-APP.git
+   cd TO--DO-APP
    ```
 
-2. The `.env` file should contain:
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables**
+   
+   Create a `.env` file in the root directory:
+   ```bash
+   # Copy the example file
+   cp .env.example .env
+   ```
+   
+   Edit the `.env` file with your MongoDB connection string:
    ```env
-   MONGODB_URI=mongodb+srv://ranamayank080:ishurana098@clustertest.hkinjhb.mongodb.net/?retryWrites=true&w=majority&appName=ClusterTest
+   MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database
    PORT=3000
+   NODE_ENV=development
    ```
 
-### 4. Start the Application
+4. **Start the server**
+   ```bash
+   npm start
+   # or
+   node server/server.js
+   ```
 
-```bash
-# Development mode (with auto-restart)
-npm run dev
+5. **Open your browser**
+   Navigate to `http://localhost:3000`
 
-# Production mode
-npm start
+## Environment Variables
+
+Create a `.env` file in the root directory with the following variables:
+
+```env
+# MongoDB Connection String
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database
+
+# Server Configuration
+PORT=3000
+NODE_ENV=development
 ```
 
-The application will be available at `http://localhost:3000`
+## Security Notes
+
+- ⚠️ **Never commit your `.env` file to version control**
+- ⚠️ **Keep your MongoDB URI private**
+- ⚠️ **Use strong passwords for your database**
+- ⚠️ **Enable MongoDB Atlas network access restrictions**
+
+## Project Structure
+
+```
+TO--DO-APP/
+├── server/
+│   └── server.js          # Express server with MongoDB integration
+├── home.html              # Landing page
+├── login.html             # Login page
+├── register.html          # Registration page
+├── dashboard.html         # Task management dashboard
+├── script.js              # Frontend JavaScript
+├── style.css              # Styles
+├── package.json           # Dependencies
+├── .env                   # Environment variables (not in git)
+├── .env.example           # Example environment variables
+└── .gitignore            # Git ignore rules
+```
 
 ## API Endpoints
 
-### Authentication
-
-- `POST /api/register` - Register a new user
-  - Body: `{ "email": "user@example.com", "password": "password123" }`
-
-- `POST /api/login` - Login user
-  - Body: `{ "email": "user@example.com", "password": "password123" }`
-
-- `GET /api/users` - Get all users (for testing)
-
-### Pages
-
-- `GET /` - Home page
-- `GET /login` - Login page
-- `GET /register` - Registration page
+- `POST /api/register` - User registration
+- `POST /api/login` - User authentication
+- `GET /` - Serve home page
+- `GET /dashboard.html` - Serve dashboard
 
 ## Database Schema
 
 ### User Collection
 ```javascript
 {
-  _id: ObjectId,
-  email: String (unique, required),
-  password: String (hashed, required, min 6 chars),
-  createdAt: Date (default: now)
+  email: String (required, unique),
+  password: String (hashed, required),
+  createdAt: Date
 }
 ```
 
-## Security Features
+## Contributing
 
-- Password hashing using bcrypt with 12 salt rounds
-- Input validation and sanitization
-- CORS enabled for cross-origin requests
-- Email format validation
-- Password length requirements
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
-## File Structure
+## License
 
-```
-├── home.html          # Landing page
-├── login.html         # Login page
-├── register.html      # Registration page
-├── server.js          # Express server
-├── package.json       # Dependencies
-├── env.example        # Environment variables example
-└── README.md          # This file
-```
+This project is licensed under the MIT License.
 
-## Usage
+## Support
 
-1. Start the server: `npm run dev`
-2. Open `http://localhost:3000` in your browser
-3. Click "Get Started" to register a new account
-4. Use your credentials to log in
-
-## Troubleshooting
-
-### MongoDB Connection Issues
-- Ensure MongoDB is running (local) or connection string is correct (Atlas)
-- Check if the database name in the connection string matches your setup
-- Verify network connectivity for Atlas connections
-
-### Port Already in Use
-- Change the PORT in `.env` file
-- Or kill the process using the current port
-
-### Module Not Found Errors
-- Run `npm install` to install dependencies
-- Check if `node_modules` folder exists
-
-## Development
-
-To run in development mode with auto-restart:
-```bash
-npm run dev
-```
-
-The server will automatically restart when you make changes to the code. 
+For support, please open an issue on GitHub or contact the development team. 

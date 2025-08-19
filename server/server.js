@@ -14,7 +14,12 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, '..')));
 
 // MongoDB Connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://ranamayank080:ishurana098@clustertest.hkinjhb.mongodb.net/?retryWrites=true&w=majority&appName=ClusterTest';
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+    console.error('MONGODB_URI environment variable is not set');
+    process.exit(1);
+}
 
 mongoose.connect(MONGODB_URI, {
     useNewUrlParser: true,
