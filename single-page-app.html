@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitrix24 - Complete Task Manager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --accent: #1eb6f9;
+            --text-dark: #222;
+            --text-light: #fff;
+            --bg-light: #f8fafd;
+            --shadow: 0 8px 32px rgba(74, 144, 226, 0.15);
+            --success: #2ecc71;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        /* Navigation */
+        .navbar {
+            background: #fff;
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+        }
+        
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+        
+        .nav-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            cursor: pointer;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s;
+            cursor: pointer;
+        }
+        
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+        
+        .nav-links a.active {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        /* Main Content */
+        .main-content {
+            margin-top: 80px;
+            min-height: calc(100vh - 80px);
+        }
+        
+        .page {
+            display: none;
+            min-height: calc(100vh - 80px);
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        /* Common Styles */
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #357abd;
+        }
+        
+        .btn-secondary {
+            background: #f8f9fa;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--primary);
+            color: white;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            .nav-links {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+        
+        /* Home Page Styles */
+        .main-hero {
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            width: 100vw;
+            min-height: 100vh;
+            background: linear-gradient(90deg, #fff 60%, #e3f1fd 100%);
+        }
+        
+        .hero-left {
+            flex: 1 1 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 5vw;
+            max-width: 650px;
+            min-width: 340px;
+        }
+        
+        .brand {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: 1px;
+            margin-bottom: 2.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3em;
+        }
+        
+        .hero-title {
+            font-size: 3.2rem;
+            font-weight: 300;
+            line-height: 1.1;
+            margin-bottom: 1.2rem;
+            letter-spacing: -1px;
+        }
+        
+        .hero-title .free {
+            color: var(--primary);
+            font-weight: 400;
+        }
+        
+        .hero-title .img-bubble {
+            display: inline-block;
+            vertical-align: middle;
+            background: var(--accent);
+            border-radius: 2.5rem;
+            padding: 0.2em 0.7em;
+            margin: 0 0.2em;
+        }
+        
+        .hero-title .img-bubble img {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #fff;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 8px rgba(30,182,249,0.08);
+        }
+        
+        .hero-desc {
+            font-size: 1.18rem;
+            margin-bottom: 2.2rem;
+            color: #444;
+            max-width: 90%;
+        }
+        
+        .hero-btn {
+            display: inline-block;
+            padding: 1rem 2.5rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-light);
+            background: var(--primary);
+            border: none;
+            border-radius: 2.5rem;
+            box-shadow: 0 2px 12px rgba(74,144,226,0.10);
+            cursor: pointer;
+            transition: box-shadow 0.25s, background 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-btn:hover {
+            box-shadow: 0 0 32px 8px #b3e0ff, 0 2px 12px rgba(74,144,226,0.18);
+            background: #357abd;
+        }
+        
+        .hero-right {
+            flex: 1 1 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            min-width: 350px;
+            background: linear-gradient(180deg, #e3f1fd 60%, #b3e0ff 100%);
+            border-top-left-radius: 80px;
+            border-bottom-left-radius: 80px;
+            overflow: hidden;
+        }
+        
+        .hero-img-container {
+            position: relative;
+            width: 90%;
+            max-width: 600px;
+            min-width: 320px;
+            margin: 0 auto;
+            box-shadow: var(--shadow);
+            border-radius: 2.5rem;
+            background: #fff;
+            overflow: hidden;
+        }
+        
+        .hero-img-container img {
+            width: 100%;
+            display: block;
+            border-radius: 2.5rem;
+        }
+        
+        /* Features Page Styles */
+        .hero-section {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: white;
+        }
+        
+        .hero-section h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            font-weight: 300;
+        }
+        
+        .hero-section p {
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .features-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+        
+        .feature-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .feature-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+        }
+        
+        .feature-card p {
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        /* Pricing Page Styles */
+        .pricing-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+        
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+        
+        .pricing-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow);
+            text-align: center;
+            position: relative;
+            transition: transform 0.3s;
+        }
+        
+        .pricing-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .pricing-card.popular {
+            border: 3px solid var(--primary);
+            transform: scale(1.05);
+        }
+        
+        .popular-badge {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 1rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .plan-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+        }
+        
+        .plan-price {
+            font-size: 3rem;
+            font-weight: 300;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .plan-price span {
+            font-size: 1rem;
+            color: #666;
+        }
+        
+        .plan-description {
+            color: #666;
+            margin-bottom: 2rem;
+        }
+        
+        .plan-features {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+        
+        .plan-features li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .plan-features .included {
+            color: var(--success);
+        }
+        
+        .plan-btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            border-radius: 2rem;
+            font-weight: 600;
+            transition: background 0.3s;
+            width: 100%;
+            cursor: pointer;
+        }
+        
+        .plan-btn:hover {
+            background: #357abd;
+        }
+        
+        .plan-btn.secondary {
+            background: #f8f9fa;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+        
+        .plan-btn.secondary:hover {
+            background: var(--primary);
+            color: white;
+        }
+        
+        /* Dashboard Page Styles */
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .app-container header {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+        
+        .app-container h1 {
+            color: var(--primary);
+            margin: 0;
+        }
+        
+        .controls {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .add-btn {
+            background: var(--primary);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .filters input,
+        .filters select {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 0.5rem;
+        }
+        
+        #task-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        #task-list li {
+            background: white;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        /* Help Page Styles */
+        .help-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+        
+        .help-categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+        
+        .category-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow);
+            text-align: center;
+            transition: transform 0.3s;
+            cursor: pointer;
+        }
+        
+        .category-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .category-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        
+        .category-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+        }
+        
+        .category-card p {
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+        
+        .article-count {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        /* Contact Page Styles */
+        .contact-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+        }
+        
+        .contact-info {
+            background: white;
+            padding: 3rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow);
+        }
+        
+        .contact-info h2 {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            color: var(--primary);
+        }
+        
+        .contact-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: var(--bg-light);
+            border-radius: 0.5rem;
+        }
+        
+        .contact-icon {
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-right: 1rem;
+            width: 40px;
+            text-align: center;
+        }
+        
+        .contact-details h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+        }
+        
+        .contact-details p {
+            color: #666;
+            margin: 0;
+        }
+        
+        .contact-form {
+            background: white;
+            padding: 3rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow);
+        }
+        
+        .contact-form h2 {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            color: var(--primary);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+        
+        .submit-btn {
+            background: var(--primary);
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: 100%;
+        }
+        
+        .submit-btn:hover {
+            background: #357abd;
+        }
+        
+        /* Auth Pages Styles */
+        .auth-container {
+            min-height: calc(100vh - 80px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(120deg, #e3f1fd 0%, #b3e0ff 100%);
+            padding: 2rem;
+        }
+        
+        .auth-box {
+            background: #fff;
+            padding: 2.5rem 2rem 2rem 2rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 8px 32px rgba(74, 144, 226, 0.15);
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .auth-logo {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            letter-spacing: 1px;
+            text-align: center;
+            width: 100%;
+        }
+        
+        .auth-title {
+            font-size: 1.2rem;
+            color: #333;
+            margin-bottom: 2rem;
+            text-align: center;
+            width: 100%;
+        }
+        
+        .auth-form {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+        
+        .auth-form label {
+            font-size: 1rem;
+            color: #444;
+            margin-bottom: 0.3rem;
+        }
+        
+        .auth-form input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 0.8rem 1rem;
+            border-radius: 0.7rem;
+            border: 1px solid #c7e0f7;
+            font-size: 1rem;
+            background: #f8fafd;
+            transition: border 0.2s;
+            display: block;
+        }
+        
+        .auth-form input:focus {
+            border: 1.5px solid var(--primary);
+            outline: none;
+        }
+        
+        .auth-btn {
+            margin-top: 0.5rem;
+            padding: 0.9rem 0;
+            border-radius: 2rem;
+            border: none;
+            background: var(--primary);
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 12px rgba(74,144,226,0.10);
+            transition: box-shadow 0.25s, background 0.2s;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+        }
+        
+        .auth-btn:hover {
+            box-shadow: 0 0 32px 8px #b3e0ff, 0 2px 12px rgba(74,144,226,0.18);
+            background: #357abd;
+        }
+        
+        .auth-link {
+            text-align: center;
+            font-size: 0.95rem;
+            margin-top: 1rem;
+        }
+        
+        .auth-link a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: text-decoration 0.2s;
+            cursor: pointer;
+        }
+        
+        .auth-link a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 900px) {
+            .main-hero {
+                flex-direction: column;
+                min-height: unset;
+                height: auto;
+            }
+            .hero-left, .hero-right {
+                max-width: 100vw;
+                min-width: 0;
+                border-radius: 0;
+                padding: 2.5vw 4vw;
+            }
+            .hero-img-container {
+                min-width: 0;
+                width: 100%;
+            }
+            .contact-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .hero-title {
+                font-size: 2.1rem;
+            }
+            .brand {
+                font-size: 1.3rem;
+            }
+            .hero-left {
+                padding: 1.5rem 1rem;
+            }
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .filters {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-content">
+            <div class="nav-brand" onclick="showPage('home')">Bitrix24</div>
+            <div class="nav-links">
+                <a onclick="showPage('home')" class="active">Home</a>
+                <a onclick="showPage('features')">Features</a>
+                <a onclick="showPage('pricing')">Pricing</a>
+                <a onclick="showPage('dashboard')">Dashboard</a>
+                <a onclick="showPage('help')">Help</a>
+                <a onclick="showPage('contact')">Contact</a>
+                <a onclick="showPage('login')">Login</a>
+                <a onclick="showPage('register')">Register</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Home Page -->
+        <div id="home" class="page active">
+            <!-- Home content will be loaded here -->
+        </div>
+
+        <!-- Features Page -->
+        <div id="features" class="page">
+            <!-- Features content will be loaded here -->
+        </div>
+
+        <!-- Pricing Page -->
+        <div id="pricing" class="page">
+            <!-- Pricing content will be loaded here -->
+        </div>
+
+        <!-- Dashboard Page -->
+        <div id="dashboard" class="page">
+            <!-- Dashboard content will be loaded here -->
+        </div>
+
+        <!-- Help Page -->
+        <div id="help" class="page">
+            <!-- Help content will be loaded here -->
+        </div>
+
+        <!-- Contact Page -->
+        <div id="contact" class="page">
+            <!-- Contact content will be loaded here -->
+        </div>
+
+        <!-- Login Page -->
+        <div id="login" class="page">
+            <!-- Login content will be loaded here -->
+        </div>
+
+        <!-- Register Page -->
+        <div id="register" class="page">
+            <!-- Register content will be loaded here -->
+        </div>
+    </div>
+
+    <script>
+        // Page navigation
+        function showPage(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Remove active class from all nav links
+            document.querySelectorAll('.nav-links a').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Show selected page
+            document.getElementById(pageId).classList.add('active');
+            
+            // Add active class to clicked nav link
+            event.target.classList.add('active');
+        }
+        
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set up initial content
+            setupHomePage();
+            setupFeaturesPage();
+            setupPricingPage();
+            setupDashboardPage();
+            setupHelpPage();
+            setupContactPage();
+            setupLoginPage();
+            setupRegisterPage();
+        });
+        
+        // Setup functions for each page
+        function setupHomePage() {
+            const homePage = document.getElementById('home');
+            homePage.innerHTML = `
+                <div class="main-hero">
+                    <div class="hero-left">
+                        <div class="brand">
+                            <span style="color: var(--primary);">Bitrix24</span>
+                            <span class="clock">&#128337;</span>
+                        </div>
+                        <div class="hero-title">
+                            <span class="free">FREE</span>
+                            <span class="img-bubble"><img src="https://randomuser.me/api/portraits/women/44.jpg" alt="woman"></span>
+                            <br>
+                            ONLINE TASK<br>
+                            MANAGER
+                            <span class="img-bubble"><img src="https://randomuser.me/api/portraits/men/32.jpg" alt="man"></span>
+                        </div>
+                        <div class="hero-desc">
+                            Organize and manage your team like a boss with Bitrix24, a free task management tool packing more capabilities than you can imagine.
+                        </div>
+                        <button class="hero-btn" onclick="showPage('login')"><span>Get Started</span></button>
+                    </div>
+                    <div class="hero-right">
+                        <div class="hero-img-container">
+                            <img src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80" alt="Modern Task Manager Dashboard">
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function setupFeaturesPage() {
+            const featuresPage = document.getElementById('features');
+            featuresPage.innerHTML = `
+                <section class="hero-section">
+                    <h1>Powerful Features for Better Productivity</h1>
+                    <p>Discover all the tools you need to manage tasks, collaborate with your team, and achieve your goals efficiently.</p>
+                </section>
+                <div class="features-container">
+                    <div class="features-grid">
+                        <div class="feature-card">
+                            <div class="feature-icon"><i class="fas fa-tasks"></i></div>
+                            <h3>Task Management</h3>
+                            <p>Create, organize, and track tasks with ease. Set due dates, priorities, and categories to stay on top of your work.</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon"><i class="fas fa-users"></i></div>
+                            <h3>Team Collaboration</h3>
+                            <p>Work together seamlessly with your team. Share tasks, assign responsibilities, and track progress in real-time.</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
+                            <h3>Progress Tracking</h3>
+                            <p>Monitor your productivity with detailed analytics and reports. See what's working and what needs improvement.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function setupPricingPage() {
+            const pricingPage = document.getElementById('pricing');
+            pricingPage.innerHTML = `
+                <section class="hero-section">
+                    <h1>Simple, Transparent Pricing</h1>
+                    <p>Choose the plan that's right for you. Start free and upgrade as you grow.</p>
+                </section>
+                <div class="pricing-container">
+                    <div class="pricing-grid">
+                        <div class="pricing-card">
+                            <div class="plan-name">Free</div>
+                            <div class="plan-price">$0<span>/month</span></div>
+                            <div class="plan-description">Perfect for individuals getting started</div>
+                            <ul class="plan-features">
+                                <li class="included"><i class="fas fa-check"></i> Up to 10 tasks</li>
+                                <li class="included"><i class="fas fa-check"></i> Basic task management</li>
+                                <li class="included"><i class="fas fa-check"></i> Mobile access</li>
+                            </ul>
+                            <a onclick="showPage('register')" class="plan-btn secondary">Get Started Free</a>
+                        </div>
+                        <div class="pricing-card popular">
+                            <div class="popular-badge">Most Popular</div>
+                            <div class="plan-name">Pro</div>
+                            <div class="plan-price">$9<span>/month</span></div>
+                            <div class="plan-description">Great for small teams and professionals</div>
+                            <ul class="plan-features">
+                                <li class="included"><i class="fas fa-check"></i> Unlimited tasks</li>
+                                <li class="included"><i class="fas fa-check"></i> Team collaboration</li>
+                                <li class="included"><i class="fas fa-check"></i> Advanced filtering</li>
+                            </ul>
+                            <a onclick="showPage('register')" class="plan-btn">Start Pro Trial</a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function setupDashboardPage() {
+            const dashboardPage = document.getElementById('dashboard');
+            dashboardPage.innerHTML = `
+                <div class="app-container">
+                    <header>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h1><i class="fas fa-tasks"></i> Task Dashboard</h1>
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <span id="user-info" style="color: #666; font-size: 0.9rem;"></span>
+                                <button onclick="logout()" class="btn" style="background: #dc3545; color: white; padding: 0.5rem 1rem; border: none; border-radius: 0.5rem; cursor: pointer;">
+                                    <i class="fas fa-sign-out-alt"></i> Logout
+                                </button>
+                            </div>
+                        </div>
+                    </header>
+                    <div class="controls">
+                        <button class="btn add-btn" id="add-task-btn">
+                            <i class="fas fa-plus"></i> Add New Task
+                        </button>
+                        <div class="filters">
+                            <input type="text" id="search-bar" placeholder="Search tasks...">
+                            <select id="filter-category">
+                                <option value="all">All Categories</option>
+                                <option value="Work">Work</option>
+                                <option value="Personal">Personal</option>
+                                <option value="Shopping">Shopping</option>
+                            </select>
+                        </div>
+                    </div>
+                    <ul id="task-list"></ul>
+                </div>
+            `;
+        }
+        
+        function setupHelpPage() {
+            const helpPage = document.getElementById('help');
+            helpPage.innerHTML = `
+                <section class="hero-section">
+                    <h1>Help Center</h1>
+                    <p>Find answers to your questions and learn how to get the most out of Bitrix24 Task Manager.</p>
+                </section>
+                <div class="help-container">
+                    <div class="help-categories">
+                        <div class="category-card">
+                            <div class="category-icon"><i class="fas fa-rocket"></i></div>
+                            <h3>Getting Started</h3>
+                            <p>Learn the basics of using Bitrix24 Task Manager</p>
+                            <div class="article-count">8 articles</div>
+                        </div>
+                        <div class="category-card">
+                            <div class="category-icon"><i class="fas fa-tasks"></i></div>
+                            <h3>Task Management</h3>
+                            <p>Master task creation, editing, and organization</p>
+                            <div class="article-count">12 articles</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function setupContactPage() {
+            const contactPage = document.getElementById('contact');
+            contactPage.innerHTML = `
+                <section class="hero-section">
+                    <h1>Get in Touch</h1>
+                    <p>We'd love to hear from you. Send us a message and we'll respond as soon as possible.</p>
+                </section>
+                <div class="contact-container">
+                    <div class="contact-info">
+                        <h2>Contact Information</h2>
+                        <div class="contact-item">
+                            <div class="contact-icon"><i class="fas fa-envelope"></i></div>
+                            <div class="contact-details">
+                                <h3>Email</h3>
+                                <p>support@bitrix24taskmanager.com</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="contact-form">
+                        <h2>Send us a Message</h2>
+                        <form id="contactForm">
+                            <div class="form-group">
+                                <label for="name">Full Name</label>
+                                <input type="text" id="name" name="name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Email Address</label>
+                                <input type="email" id="email" name="email" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="message">Message</label>
+                                <textarea id="message" name="message" placeholder="Tell us how we can help you..." required></textarea>
+                            </div>
+                            <button type="submit" class="submit-btn">Send Message</button>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function setupLoginPage() {
+            const loginPage = document.getElementById('login');
+            loginPage.innerHTML = `
+                <div class="auth-container">
+                    <div class="auth-box">
+                        <div class="auth-logo">Bitrix24</div>
+                        <div class="auth-title">Sign in to your account</div>
+                        <form class="auth-form" autocomplete="off" id="loginForm">
+                            <div>
+                                <label for="email">Email</label>
+                                <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                            </div>
+                            <div>
+                                <label for="password">Password</label>
+                                <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                            </div>
+                            <button type="submit" class="auth-btn"><span>Login</span></button>
+                        </form>
+                        <div id="message" style="margin-top: 1rem; text-align: center; font-size: 0.9rem;"></div>
+                        <div class="auth-link">
+                            Don't have an account? <a onclick="showPage('register')">Sign up</a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function setupRegisterPage() {
+            const registerPage = document.getElementById('register');
+            registerPage.innerHTML = `
+                <div class="auth-container">
+                    <div class="auth-box">
+                        <div class="auth-logo">Bitrix24</div>
+                        <div class="auth-title">Create your account</div>
+                        <form class="auth-form" autocomplete="off" id="registerForm">
+                            <div>
+                                <label for="email">Email</label>
+                                <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                            </div>
+                            <div>
+                                <label for="password">Password</label>
+                                <input type="password" id="password" name="password" placeholder="Enter your password (min 6 characters)" required>
+                            </div>
+                            <div>
+                                <label for="confirmPassword">Confirm Password</label>
+                                <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm your password" required>
+                            </div>
+                            <button type="submit" class="auth-btn"><span>Register</span></button>
+                        </form>
+                        <div id="message" style="margin-top: 1rem; text-align: center; font-size: 0.9rem;"></div>
+                        <div class="auth-link">
+                            Already have an account? <a onclick="showPage('login')">Sign in</a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function logout() {
+            showPage('home');
+        }
+    </script>
+</body>
+</html>
