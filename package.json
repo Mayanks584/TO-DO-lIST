@@ -1,11 +1,14 @@
 {
-  "name": "task-manager-backend",
+  "name": "taskflow",
   "version": "1.0.0",
-  "description": "Backend for Task Manager with MongoDB",
-  "main": "server.js",
+  "description": "TaskFlow - A modern, feature-rich task management application with MongoDB integration",
+  "main": "server/server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "start": "node server/server.js",
+    "dev": "nodemon server/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "echo \"Linting not configured yet\"",
+    "build": "echo \"Build process not configured yet\""
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -20,18 +23,29 @@
     "nodemon": "^3.1.10"
   },
   "keywords": [
+    "taskflow",
     "task-manager",
+    "productivity",
     "mongodb",
-    "express"
+    "express",
+    "nodejs",
+    "javascript",
+    "web-app",
+    "responsive",
+    "team-collaboration"
   ],
-  "author": "",
+  "author": "TaskFlow Team",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Mayanks584/Task-Manager-Web-App-.git"
+    "url": "git+https://github.com/Mayanks584/TaskFlow.git"
   },
   "bugs": {
-    "url": "https://github.com/Mayanks584/Task-Manager-Web-App-/issues"
+    "url": "https://github.com/Mayanks584/TaskFlow/issues"
   },
-  "homepage": "https://github.com/Mayanks584/Task-Manager-Web-App-#readme"
+  "homepage": "https://github.com/Mayanks584/TaskFlow#readme",
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  }
 }

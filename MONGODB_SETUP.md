@@ -1,4 +1,6 @@
-# MongoDB Setup Guide
+# 🗄️ TaskFlow MongoDB Setup Guide
+
+Complete guide to set up MongoDB for your TaskFlow application.
 
 ## Quick Start (Windows)
 
@@ -93,11 +95,44 @@ You should see: "It looks like you are trying to access MongoDB over HTTP on the
 
 3. **Access the application**: http://localhost:3000
 
-## Database Information
+## 🗃️ TaskFlow Database Information
 
 - **Database**: MongoDB Atlas Cloud Database
-- **Collection**: `users`
+- **Primary Collection**: `users` (for user authentication)
+- **Planned Collections**: `tasks`, `categories`, `teams`
 - **Connection String**: `mongodb+srv://ranamayank080:ishurana098@clustertest.hkinjhb.mongodb.net/?retryWrites=true&w=majority&appName=ClusterTest`
+
+### 📊 Database Schema
+
+#### Users Collection
+```javascript
+{
+  _id: ObjectId,
+  email: String (unique, required),
+  password: String (hashed with bcrypt),
+  createdAt: Date,
+  profile: {
+    name: String,
+    avatar: String
+  }
+}
+```
+
+#### Tasks Collection (Future Implementation)
+```javascript
+{
+  _id: ObjectId,
+  userId: ObjectId (ref: User),
+  title: String (required),
+  description: String,
+  category: String,
+  dueDate: Date,
+  completed: Boolean,
+  priority: String,
+  createdAt: Date,
+  updatedAt: Date
+}
+```
 
 ## Test Registration
 

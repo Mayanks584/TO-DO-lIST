@@ -1,8 +1,8 @@
-# Live Server Setup Guide
+# 🚀 TaskFlow Live Server Setup Guide
 
 ## Using VS Code "Go Live" or Any Live Server
 
-Your application is now configured to work with live servers like VS Code's "Go Live" extension or any other static file server.
+Your TaskFlow application is now configured to work with live servers like VS Code's "Go Live" extension or any other static file server.
 
 ### ✅ **What's Changed:**
 
@@ -24,16 +24,23 @@ Your application is now configured to work with live servers like VS Code's "Go 
 2. **Start a live server** pointing to your project folder
 3. **Navigate to `index.html`** or `home.html`
 
-### 📁 **File Structure for Live Server:**
+### 📁 **TaskFlow File Structure for Live Server:**
 ```
-fee project/
-├── index.html          # Entry point (redirects to home.html)
-├── home.html           # Landing page
-├── login.html          # Login page
-├── register.html       # Registration page
-├── dashboard.html      # Dashboard (requires login)
-├── script.js           # All JavaScript functionality
-├── style.css           # Styling
+TaskFlow/
+├── index.html          # Main landing page with all sections
+├── login.html          # User login page
+├── register.html       # User registration page
+├── dashboard.html      # Task management dashboard
+├── contact.html        # Contact page
+├── privacy.html        # Privacy policy page
+├── help.html           # Help center page
+├── features.html       # Features showcase page
+├── pricing.html        # Pricing plans page
+├── script.js           # Frontend JavaScript functionality
+├── page-content.js     # Page content management
+├── style.css           # Main stylesheet
+├── server/
+│   └── server.js       # Express server with MongoDB
 └── ... (other files)
 ```
 
