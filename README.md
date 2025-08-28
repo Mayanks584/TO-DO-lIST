@@ -229,17 +229,18 @@ The application automatically detects server connectivity and switches between:
 
 ## 🚀 Quick Start Guide
 
-### 🚀 **Option 1: Offline-First Development**
+### 🚀 **Option 1: Offline-First Development (Simplest)**
 1. Open project in VS Code
 2. Install "Live Server" extension
 3. Right-click `index.html` → "Open with Live Server"
 4. **Works completely offline** - all data stored in browser local storage
+5. Access at: `http://localhost:5500` (or your live server port)
 
-### 🗄️ **Option 2: Full Backend with MongoDB Atlas**
+### 🗄️ **Option 2: Full Backend with MongoDB Atlas (Production Ready)**
 1. **Set up MongoDB Atlas**:
    - Create account at [MongoDB Atlas](https://cloud.mongodb.com)
    - Create a cluster and get your connection string
-   - Whitelist your IP address
+   - Whitelist your IP address (e.g., `136.233.11.130/32`)
 
 2. **Configure environment**:
    ```bash
@@ -247,10 +248,9 @@ The application automatically detects server connectivity and switches between:
    # Edit .env with your MongoDB Atlas connection string
    ```
 
-3. **Start the server**:
+3. **Install dependencies**:
    ```bash
    npm install
-   node server.js
    ```
 
 4. **Test the connection**:
@@ -258,10 +258,180 @@ The application automatically detects server connectivity and switches between:
    node test-mongodb-atlas.js
    ```
 
-### 🔄 **Hybrid Mode (Recommended)**
+5. **Start the server**:
+   ```bash
+   node server.js
+   ```
+
+6. **Access your app**:
+   - Backend API: `http://localhost:3000`
+   - Web Interface: `http://localhost:8000` (see Option 3)
+
+### 🌐 **Option 3: Dual Server Setup (Recommended for Development)**
+This setup provides both the backend API and web interface:
+
+1. **Start the Node.js server (Backend API)**:
+   ```bash
+   node server.js
+   # Server runs on http://localhost:3000
+   # Connected to MongoDB Atlas
+   ```
+
+2. **Start the Python HTTP server (Web Interface)**:
+   ```bash
+   python -m http.server 8000
+   # Web interface runs on http://localhost:8000
+   ```
+
+3. **Access your application**:
+   - **Main Website**: `http://localhost:8000` - Landing page, login, dashboard
+   - **API Endpoints**: `http://localhost:3000` - Backend services
+   - **Database**: MongoDB Atlas (cloud storage)
+
+### 🔄 **Hybrid Mode (Automatic)**
 The application automatically works in both modes:
 - **Online**: Data syncs with MongoDB Atlas
 - **Offline**: Data stored in local storage with automatic sync when online
+
+## 📋 **Complete Setup Instructions**
+
+### **Step 1: MongoDB Atlas Configuration**
+1. **Create MongoDB Atlas Account**:
+   - Go to [MongoDB Atlas](https://cloud.mongodb.com)
+   - Sign up for a free account
+   - Create a new cluster (Free tier recommended)
+
+2. **Configure Database Access**:
+   - Go to Database Access in the left sidebar
+   - Add New Database User:
+     - Username: `taskflow_user`
+     - Password: Create a strong password
+     - Role: `Read and write to any database`
+
+3. **Configure Network Access**:
+   - Go to Network Access in the left sidebar
+   - Click "Add IP Address"
+   - Add your IP: `136.233.11.130/32` (or "Allow Access from Anywhere" for development)
+   - Add comment: "TaskFlow App Server"
+
+4. **Get Connection String**:
+   - Go to Clusters → Click "Connect"
+   - Choose "Connect your application"
+   - Copy the connection string
+   - Replace `<password>` with your database user password
+
+### **Step 2: Environment Setup**
+1. **Create .env file**:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Edit .env file**:
+   ```env
+   # MongoDB Atlas Connection String
+   MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/taskflow
+   
+   # Server Port
+   PORT=3000
+   
+   # Environment
+   NODE_ENV=development
+   
+   # Your IP Address (for reference)
+   # IP_ADDRESS=136.233.11.130/32
+   ```
+
+### **Step 3: Install Dependencies**
+```bash
+npm install
+```
+
+### **Step 4: Test Database Connection**
+```bash
+node test-mongodb-atlas.js
+```
+**Expected Output**:
+```
+Testing MongoDB Atlas connection...
+Environment variables loaded: true
+Connection string: Set (hidden for security)
+
+✅ SUCCESS: Connected to MongoDB Atlas!
+✅ Database: test
+✅ Server is ready to accept connections
+
+You can now start your application server.
+```
+
+### **Step 5: Start the Application**
+
+#### **Method A: Single Server (Backend Only)**
+```bash
+node server.js
+# Access at: http://localhost:3000
+```
+
+#### **Method B: Dual Server (Recommended)**
+**Terminal 1 - Backend API**:
+```bash
+node server.js
+# Server running on http://localhost:3000
+# Connected to MongoDB
+```
+
+**Terminal 2 - Web Interface**:
+```bash
+python -m http.server 8000
+# Serving HTTP on :: port 8000 (http://[::]:8000/)
+```
+
+**Access your app**:
+- **Main Website**: `http://localhost:8000`
+- **API Backend**: `http://localhost:3000`
+
+### **Step 6: Verify Everything Works**
+1. **Open**: `http://localhost:8000`
+2. **Test Registration**: Click "Get Started" → Register
+3. **Test Login**: Login with your credentials
+4. **Test Dashboard**: Access the full task management interface
+5. **Check Database**: Your data is now stored in MongoDB Atlas
+
+## 🔧 **Troubleshooting**
+
+### **MongoDB Connection Issues**
+```bash
+# Test connection
+node test-mongodb-atlas.js
+
+# Common solutions:
+# 1. Check your .env file has correct MONGODB_URI
+# 2. Verify IP address is whitelisted in Atlas
+# 3. Check username/password are correct
+# 4. Ensure cluster is running
+```
+
+### **Port Already in Use**
+```bash
+# Kill process on port 3000
+npx kill-port 3000
+
+# Kill process on port 8000
+npx kill-port 8000
+
+# Or restart your computer
+```
+
+### **Environment Variables Not Loading**
+```bash
+# Check if .env file exists
+ls -la .env
+
+# Verify .env content
+cat .env
+
+# Test environment loading
+node -e "require('dotenv').config(); console.log(process.env.MONGODB_URI ? 'Loaded' : 'Not loaded')"
+```
 
 ## 🤝 Contributing
 
