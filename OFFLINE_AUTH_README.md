@@ -1,6 +1,6 @@
-# 🚀 Offline-First Authentication System
+# 🚀 TaskFlow Offline-First Authentication System
 
-This project now includes a comprehensive offline-first authentication system that automatically stores user data in local storage when the server is unavailable, providing seamless user experience regardless of network connectivity.
+This project now includes a comprehensive offline-first authentication system that automatically stores user data in local storage when the server is unavailable, providing seamless user experience regardless of network connectivity. The system integrates with MongoDB Atlas for cloud storage when online.
 
 ## 📋 Features
 
