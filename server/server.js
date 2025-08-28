@@ -50,6 +50,15 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
+// Health check endpoint for connection detection
+app.get('/api/health', (req, res) => {
+    res.json({ 
+        status: 'ok', 
+        timestamp: new Date().toISOString(),
+        server: 'Task Manager API'
+    });
+});
+
 // Routes
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'home.html'));

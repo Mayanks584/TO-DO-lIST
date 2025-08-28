@@ -51,6 +51,15 @@ const validateUser = [
     body('password').isLength({ min: 6 })
 ];
 
+// Health check endpoint for connection detection
+app.get('/api/health', (req, res) => {
+    res.json({ 
+        status: 'ok', 
+        timestamp: new Date().toISOString(),
+        server: 'Task Manager API'
+    });
+});
+
 // Routes
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/home.html');

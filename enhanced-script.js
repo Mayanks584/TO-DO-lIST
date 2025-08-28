@@ -1,106 +1,103 @@
-// Fixed Script with Proper Offline Functionality
+/**
+ * Enhanced Script with Offline-First Authentication
+ * This script integrates the OfflineAuthAPI to provide seamless online/offline authentication
+ */
 
-// User registration function
+// Initialize the offline authentication API
+const authAPI = new OfflineAuthAPI({
+    serverUrl: 'http://localhost:3000', // Your server URL
+    timeout: 5000
+});
+
+// Connection status indicator
+function updateConnectionStatus() {
+    const statusElement = document.getElementById('connection-status');
+    if (!statusElement) return;
+
+    const status = authAPI.getConnectionStatus();
+    let statusText = '';
+    let statusClass = '';
+
+    if (status.isOnline && status.serverAvailable) {
+        statusText = '🟢 Online - Server Connected';
+        statusClass = 'status-online';
+    } else if (status.isOnline && !status.serverAvailable) {
+        statusText = '🟡 Online - Server Offline (Using Local Storage)';
+        statusClass = 'status-offline-server';
+    } else {
+        statusText = '🔴 Offline - Using Local Storage';
+        statusClass = 'status-offline';
+    }
+
+    if (status.pendingOperations > 0) {
+        statusText += ` (${status.pendingOperations} pending sync)`;
+    }
+
+    statusElement.textContent = statusText;
+    statusElement.className = `connection-status ${statusClass}`;
+}
+
+// Enhanced user registration function
 async function registerUser(email, password) {
     try {
-        console.log('Registering user:', email);
-        
-        // Check if user already exists
-        const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
-        const existingUser = existingUsers.find(user => user.email === email);
-        
-        if (existingUser) {
-            console.log('User already exists');
-            return {
-                success: false,
-                message: 'User with this email already exists'
-            };
-        }
-
-        // Create new user
-        const newUser = {
-            id: Date.now().toString(),
-            email: email,
-            password: password, // In production, this should be hashed
-            createdAt: new Date().toISOString()
-        };
-
-        // Store user in localStorage
-        existingUsers.push(newUser);
-        localStorage.setItem('users', JSON.stringify(existingUsers));
-        
-        console.log('User registered successfully:', newUser);
-
-        return {
-            success: true,
-            message: 'User registered successfully',
-            user: {
-                id: newUser.id,
-                email: newUser.email,
-                createdAt: newUser.createdAt
-            }
-        };
-
+        updateConnectionStatus();
+        const result = await authAPI.register({ email, password });
+        updateConnectionStatus();
+        return result;
     } catch (error) {
         console.error('Registration error:', error);
         return {
             success: false,
-            message: 'Registration failed. Please try again.'
+            message: 'Registration failed. Please try again.',
+            source: 'error'
         };
     }
 }
 
-// User login function
+// Enhanced user login function
 async function loginUser(email, password) {
     try {
-        console.log('Logging in user:', email);
-        
-        // Get users from localStorage
-        const users = JSON.parse(localStorage.getItem('users') || '[]');
-        console.log('Available users:', users.map(u => u.email));
-        
-        const user = users.find(u => u.email === email && u.password === password);
-
-        if (!user) {
-            console.log('User not found or wrong password');
-            return {
-                success: false,
-                message: 'Invalid email or password'
-            };
-        }
-
-        console.log('Login successful for user:', user.email);
-
-        return {
-            success: true,
-            message: 'Login successful',
-            user: {
-                id: user.id,
-                email: user.email,
-                createdAt: user.createdAt
-            }
-        };
-
+        updateConnectionStatus();
+        const result = await authAPI.login({ email, password });
+        updateConnectionStatus();
+        return result;
     } catch (error) {
         console.error('Login error:', error);
         return {
             success: false,
-            message: 'Login failed. Please try again.'
+            message: 'Login failed. Please try again.',
+            source: 'error'
         };
     }
+}
+
+// Enhanced logout function
+function logout() {
+    const result = authAPI.logout();
+    updateConnectionStatus();
+    window.location.href = 'login.html';
+    return result;
+}
+
+// Check authentication status
+function checkAuth() {
+    return authAPI.getCurrentUser();
+}
+
+// Check if user is authenticated
+function isAuthenticated() {
+    return authAPI.isAuthenticated();
 }
 
 // Handle registration form submission
 async function handleRegister(event) {
     event.preventDefault();
     
-    const email = document.getElementById('email').value.trim();
+    const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
     const messageDiv = document.getElementById('message');
     const submitBtn = document.querySelector('.register-btn');
-    
-    console.log('Registration form submitted for:', email);
     
     // Validate passwords match
     if (password !== confirmPassword) {
@@ -123,11 +120,8 @@ async function handleRegister(event) {
         const data = await registerUser(email, password);
         
         if (data.success) {
-            showMessage(messageDiv, 'Account created successfully! Redirecting to dashboard...', 'success');
-            
-            // Store user info in localStorage
-            localStorage.setItem('currentUser', JSON.stringify(data.user));
-            console.log('Current user set:', data.user);
+            const sourceText = data.source === 'server' ? '' : ' (saved locally - will sync when online)';
+            showMessage(messageDiv, `Account created successfully${sourceText}! Redirecting to dashboard...`, 'success');
             
             // Redirect to dashboard
             setTimeout(() => {
@@ -149,12 +143,10 @@ async function handleRegister(event) {
 async function handleLogin(event) {
     event.preventDefault();
     
-    const email = document.getElementById('email').value.trim();
+    const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     const messageDiv = document.getElementById('message');
     const submitBtn = document.querySelector('.login-btn');
-    
-    console.log('Login form submitted for:', email);
     
     // Show loading state
     setButtonLoading(submitBtn, 'Logging in...');
@@ -165,11 +157,8 @@ async function handleLogin(event) {
         const data = await loginUser(email, password);
         
         if (data.success) {
-            showMessage(messageDiv, 'Login successful! Redirecting...', 'success');
-            
-            // Store user info in localStorage
-            localStorage.setItem('currentUser', JSON.stringify(data.user));
-            console.log('Current user set:', data.user);
+            const sourceText = data.source === 'server' ? '' : ' (offline mode)';
+            showMessage(messageDiv, `Login successful${sourceText}! Redirecting...`, 'success');
             
             // Redirect to dashboard
             setTimeout(() => {
@@ -187,7 +176,7 @@ async function handleLogin(event) {
     }
 }
 
-// Utility functions
+// Utility functions for UI feedback
 function showMessage(element, message, type) {
     element.textContent = message;
     element.style.color = type === 'success' ? '#28a745' : '#dc3545';
@@ -208,39 +197,19 @@ function resetButton(button, text) {
     button.innerHTML = `<span>${text}</span>`;
 }
 
-// Check if user is logged in
-function checkAuth() {
-    const currentUser = localStorage.getItem('currentUser');
-    if (currentUser) {
-        console.log('User is authenticated:', JSON.parse(currentUser));
-        return JSON.parse(currentUser);
-    }
-    console.log('No user authenticated');
-    return null;
-}
-
-// Logout function
-function logout() {
-    localStorage.removeItem('currentUser');
-    console.log('User logged out');
-    window.location.href = 'login.html';
-}
-
-// Task Management System
-class TaskManager {
+// Enhanced Task Management System with offline support
+class EnhancedTaskManager {
     constructor() {
-        this.tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
         this.currentUser = checkAuth();
-        
         if (!this.currentUser) {
-            console.log('No authenticated user, redirecting to login');
             window.location.href = 'login.html';
             return;
         }
-        
-        console.log('TaskManager initialized for user:', this.currentUser.email);
+
+        this.tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
         this.init();
         this.addSampleTasksIfEmpty();
+        this.startPeriodicSync();
     }
 
     init() {
@@ -248,6 +217,7 @@ class TaskManager {
         this.renderTasks();
         this.updateTaskCount();
         this.updateUserInfo();
+        updateConnectionStatus();
     }
 
     updateUserInfo() {
@@ -255,6 +225,16 @@ class TaskManager {
         if (userInfo && this.currentUser) {
             userInfo.textContent = `Welcome, ${this.currentUser.email}`;
         }
+    }
+
+    startPeriodicSync() {
+        // Check for sync opportunities every 30 seconds
+        setInterval(() => {
+            if (authAPI.getConnectionStatus().serverAvailable) {
+                authAPI.syncPendingData();
+                updateConnectionStatus();
+            }
+        }, 30000);
     }
 
     setupEventListeners() {
@@ -307,9 +287,18 @@ class TaskManager {
         if (sortTasks) {
             sortTasks.addEventListener('change', () => this.renderTasks());
         }
+
+        // Connection status refresh
+        const refreshBtn = document.getElementById('refresh-connection');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                authAPI.checkServerAvailability();
+                updateConnectionStatus();
+            });
+        }
     }
 
-    // Task CRUD Operations
+    // Task CRUD Operations (same as before but with enhanced logging)
     addTask(taskData) {
         const task = {
             id: Date.now().toString(),
@@ -378,7 +367,6 @@ class TaskManager {
     // Data persistence
     saveTasks() {
         localStorage.setItem('tasks', JSON.stringify(this.tasks));
-        console.log('Tasks saved to localStorage');
     }
 
     // Get filtered and sorted tasks
@@ -599,8 +587,8 @@ class TaskManager {
                 {
                     id: Date.now().toString(),
                     userId: this.currentUser.id,
-                    title: 'Welcome to Task Manager!',
-                    description: 'This is your first task. Click the checkbox to mark it as complete.',
+                    title: 'Welcome to Enhanced Task Manager!',
+                    description: 'This task manager now works offline. Your data is automatically synced when the server is available.',
                     dueDate: tomorrow.toISOString().split('T')[0],
                     category: 'Personal',
                     status: 'incomplete',
@@ -610,8 +598,8 @@ class TaskManager {
                 {
                     id: (Date.now() + 1).toString(),
                     userId: this.currentUser.id,
-                    title: 'Explore the features',
-                    description: 'Try adding, editing, and deleting tasks. Use the search and filter options to organize your tasks.',
+                    title: 'Test offline functionality',
+                    description: 'Try turning off your server and creating new tasks. They will be saved locally and synced when the server comes back online.',
                     dueDate: nextWeek.toISOString().split('T')[0],
                     category: 'Work',
                     status: 'incomplete',
@@ -624,49 +612,96 @@ class TaskManager {
             this.saveTasks();
             this.renderTasks();
             this.updateTaskCount();
-            
-            console.log('Sample tasks added');
         }
     }
 }
 
-// Initialize forms when DOM is loaded
+// Initialize forms and connection status when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, initializing...');
+    // Update connection status immediately
+    updateConnectionStatus();
     
+    // Set up periodic connection status updates
+    setInterval(updateConnectionStatus, 10000); // Update every 10 seconds
+
     // Register form
     const registerForm = document.getElementById('registerForm');
     if (registerForm) {
-        console.log('Register form found, adding event listener');
         registerForm.addEventListener('submit', handleRegister);
     }
     
     // Login form
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
-        console.log('Login form found, adding event listener');
         loginForm.addEventListener('submit', handleLogin);
     }
     
     // Dashboard authentication check and user info
     if (window.location.pathname.includes('dashboard.html')) {
-        console.log('Dashboard page detected');
         const user = checkAuth();
         if (!user) {
-            console.log('No authenticated user, redirecting to login');
             window.location.href = 'login.html';
         } else {
-            console.log('User authenticated, initializing TaskManager');
-            // Initialize TaskManager for the dashboard
-            window.taskManager = new TaskManager();
+            // Initialize Enhanced TaskManager for the dashboard
+            window.taskManager = new EnhancedTaskManager();
         }
     }
-    
-    console.log('Initialization complete');
+
+    // Add connection status indicator to pages
+    addConnectionStatusIndicator();
 });
 
-// Export functions for global access
+// Add connection status indicator to the page
+function addConnectionStatusIndicator() {
+    // Only add if it doesn't already exist
+    if (document.getElementById('connection-status')) return;
+
+    const statusDiv = document.createElement('div');
+    statusDiv.id = 'connection-status';
+    statusDiv.style.cssText = `
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        z-index: 1000;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    `;
+
+    document.body.appendChild(statusDiv);
+
+    // Add styles for different states
+    const styles = document.createElement('style');
+    styles.textContent = `
+        .status-online {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status-offline-server {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .status-offline {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    `;
+    document.head.appendChild(styles);
+
+    updateConnectionStatus();
+}
+
+// Export enhanced functions for global access
 window.registerUser = registerUser;
 window.loginUser = loginUser;
 window.logout = logout;
 window.checkAuth = checkAuth;
+window.isAuthenticated = isAuthenticated;
+window.authAPI = authAPI;
+

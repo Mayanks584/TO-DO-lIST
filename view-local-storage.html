@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Storage Viewer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .data-section {
+            margin-bottom: 30px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .data-header {
+            background: #4a90e2;
+            color: white;
+            padding: 15px 20px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .data-content {
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        .data-json {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+        .no-data {
+            color: #666;
+            font-style: italic;
+            text-align: center;
+            padding: 20px;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-primary:hover { background: #0056b3; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-success:hover { background: #218838; }
+        .btn-info { background: #17a2b8; color: white; }
+        .btn-info:hover { background: #138496; }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #4a90e2;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #4a90e2;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-weight: 500;
+        }
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Local Storage Data Viewer</h1>
+        <p>This page shows all data stored in your browser's local storage for the Task Manager application.</p>
+        
+        <div class="alert alert-info">
+            <strong>ℹ️ Info:</strong> This data is stored locally in your browser and persists between sessions.
+        </div>
+        
+        <div class="controls">
+            <button class="btn btn-primary" onclick="refreshData()">🔄 Refresh Data</button>
+            <button class="btn btn-success" onclick="downloadData()">💾 Download Data</button>
+            <button class="btn btn-info" onclick="importData()">📥 Import Data</button>
+            <button class="btn btn-danger" onclick="clearAllData()">🗑️ Clear All Data</button>
+        </div>
+        
+        <div class="stats" id="stats"></div>
+        
+        <div class="data-section">
+            <div class="data-header">
+                <span>👥 Registered Users</span>
+                <span id="users-count">0 users</span>
+            </div>
+            <div class="data-content">
+                <div id="users-data" class="data-json"></div>
+            </div>
+        </div>
+        
+        <div class="data-section">
+            <div class="data-header">
+                <span>👤 Current User Session</span>
+                <span id="current-user-status">Not logged in</span>
+            </div>
+            <div class="data-content">
+                <div id="current-user-data" class="data-json"></div>
+            </div>
+        </div>
+        
+        <div class="data-section">
+            <div class="data-header">
+                <span>📝 Tasks</span>
+                <span id="tasks-count">0 tasks</span>
+            </div>
+            <div class="data-content">
+                <div id="tasks-data" class="data-json"></div>
+            </div>
+        </div>
+        
+        <div class="alert alert-warning">
+            <strong>⚠️ Warning:</strong> Clearing browser data or using incognito mode will remove all stored information.
+        </div>
+    </div>
+
+    <!-- Hidden file input for import -->
+    <input type="file" id="fileInput" style="display: none;" accept=".json" onchange="handleFileImport(event)">
+
+    <script>
+        function refreshData() {
+            loadUsersData();
+            loadCurrentUserData();
+            loadTasksData();
+            updateStats();
+        }
+
+        function loadUsersData() {
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const usersContainer = document.getElementById('users-data');
+            const usersCount = document.getElementById('users-count');
+            
+            if (users.length === 0) {
+                usersContainer.innerHTML = '<div class="no-data">No users registered</div>';
+                usersCount.textContent = '0 users';
+            } else {
+                // Hide passwords for security
+                const safusers = users.map(user => ({
+                    ...user,
+                    password: '[HIDDEN FOR SECURITY]'
+                }));
+                usersContainer.textContent = JSON.stringify(safusers, null, 2);
+                usersCount.textContent = `${users.length} user${users.length !== 1 ? 's' : ''}`;
+            }
+        }
+
+        function loadCurrentUserData() {
+            const currentUser = localStorage.getItem('currentUser');
+            const currentUserContainer = document.getElementById('current-user-data');
+            const currentUserStatus = document.getElementById('current-user-status');
+            
+            if (!currentUser) {
+                currentUserContainer.innerHTML = '<div class="no-data">No user currently logged in</div>';
+                currentUserStatus.textContent = 'Not logged in';
+            } else {
+                currentUserContainer.textContent = JSON.stringify(JSON.parse(currentUser), null, 2);
+                const user = JSON.parse(currentUser);
+                currentUserStatus.textContent = `Logged in as ${user.email}`;
+            }
+        }
+
+        function loadTasksData() {
+            const tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+            const tasksContainer = document.getElementById('tasks-data');
+            const tasksCount = document.getElementById('tasks-count');
+            
+            if (tasks.length === 0) {
+                tasksContainer.innerHTML = '<div class="no-data">No tasks created</div>';
+                tasksCount.textContent = '0 tasks';
+            } else {
+                tasksContainer.textContent = JSON.stringify(tasks, null, 2);
+                tasksCount.textContent = `${tasks.length} task${tasks.length !== 1 ? 's' : ''}`;
+            }
+        }
+
+        function updateStats() {
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+            const currentUser = localStorage.getItem('currentUser');
+            
+            const completedTasks = tasks.filter(task => task.status === 'completed').length;
+            const pendingTasks = tasks.filter(task => task.status === 'incomplete').length;
+            
+            const statsContainer = document.getElementById('stats');
+            statsContainer.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${users.length}</div>
+                    <div class="stat-label">Registered Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${tasks.length}</div>
+                    <div class="stat-label">Total Tasks</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${completedTasks}</div>
+                    <div class="stat-label">Completed Tasks</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${pendingTasks}</div>
+                    <div class="stat-label">Pending Tasks</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${currentUser ? '1' : '0'}</div>
+                    <div class="stat-label">Active Session</div>
+                </div>
+            `;
+        }
+
+        function downloadData() {
+            const data = {
+                users: JSON.parse(localStorage.getItem('users') || '[]'),
+                currentUser: JSON.parse(localStorage.getItem('currentUser') || 'null'),
+                tasks: JSON.parse(localStorage.getItem('tasks') || '[]'),
+                exportDate: new Date().toISOString(),
+                version: '1.0'
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `task-manager-backup-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert('Data exported successfully!');
+        }
+
+        function importData() {
+            document.getElementById('fileInput').click();
+        }
+
+        function handleFileImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    if (confirm('This will replace all current data. Are you sure you want to continue?')) {
+                        if (data.users) localStorage.setItem('users', JSON.stringify(data.users));
+                        if (data.currentUser) localStorage.setItem('currentUser', JSON.stringify(data.currentUser));
+                        if (data.tasks) localStorage.setItem('tasks', JSON.stringify(data.tasks));
+                        
+                        refreshData();
+                        alert('Data imported successfully!');
+                    }
+                } catch (error) {
+                    alert('Error importing data: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function clearAllData() {
+            if (confirm('Are you sure you want to clear ALL data? This cannot be undone!')) {
+                localStorage.removeItem('users');
+                localStorage.removeItem('currentUser');
+                localStorage.removeItem('tasks');
+                
+                refreshData();
+                alert('All data cleared successfully!');
+            }
+        }
+
+        // Quick access functions for browser console
+        window.viewUsers = () => console.log('Users:', JSON.parse(localStorage.getItem('users') || '[]'));
+        window.viewCurrentUser = () => console.log('Current User:', JSON.parse(localStorage.getItem('currentUser') || 'null'));
+        window.viewTasks = () => console.log('Tasks:', JSON.parse(localStorage.getItem('tasks') || '[]'));
+        window.viewAllData = () => {
+            console.log('=== ALL LOCAL STORAGE DATA ===');
+            console.log('Users:', JSON.parse(localStorage.getItem('users') || '[]'));
+            console.log('Current User:', JSON.parse(localStorage.getItem('currentUser') || 'null'));
+            console.log('Tasks:', JSON.parse(localStorage.getItem('tasks') || '[]'));
+        };
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', refreshData);
+        
+        // Auto-refresh every 10 seconds if data changes
+        setInterval(() => {
+            const currentData = {
+                users: localStorage.getItem('users'),
+                currentUser: localStorage.getItem('currentUser'),
+                tasks: localStorage.getItem('tasks')
+            };
+            
+            if (JSON.stringify(currentData) !== JSON.stringify(window.lastData || {})) {
+                refreshData();
+                window.lastData = currentData;
+            }
+        }, 10000);
+    </script>
+</body>
+</html>
