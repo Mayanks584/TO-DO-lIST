@@ -587,8 +587,8 @@ class EnhancedTaskManager {
                 {
                     id: Date.now().toString(),
                     userId: this.currentUser.id,
-                    title: 'Welcome to Enhanced Task Manager!',
-                    description: 'This task manager now works offline. Your data is automatically synced when the server is available.',
+                    title: 'Welcome to TaskFlow!',
+                    description: 'This TaskFlow now works offline. Your data is automatically synced when the server is available.',
                     dueDate: tomorrow.toISOString().split('T')[0],
                     category: 'Personal',
                     status: 'incomplete',

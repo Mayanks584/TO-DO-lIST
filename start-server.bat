@@ -1,6 +1,6 @@
 @echo off
 echo ========================================
-echo    Task Manager Server Startup
+echo    TaskFlow Server Startup
 echo ========================================
 echo.
 echo Checking prerequisites...

@@ -599,7 +599,7 @@ class TaskManager {
                 {
                     id: Date.now().toString(),
                     userId: this.currentUser.id,
-                    title: 'Welcome to Task Manager!',
+                    title: 'Welcome to TaskFlow!',
                     description: 'This is your first task. Click the checkbox to mark it as complete.',
                     dueDate: tomorrow.toISOString().split('T')[0],
                     category: 'Personal',

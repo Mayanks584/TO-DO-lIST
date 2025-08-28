@@ -55,7 +55,7 @@ app.get('/api/health', (req, res) => {
     res.json({ 
         status: 'ok', 
         timestamp: new Date().toISOString(),
-        server: 'Task Manager API'
+                    server: 'TaskFlow API'
     });
 });
 
