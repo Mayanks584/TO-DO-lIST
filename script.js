@@ -98,50 +98,46 @@ async function handleRegister(event) {
     const password = document.getElementById('password').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
     const messageDiv = document.getElementById('message');
-    const submitBtn = document.querySelector('.register-btn');
+    const submitBtn = document.querySelector('#registerForm button[type="submit"]');
     
-    console.log('Registration form submitted for:', email);
+    // Validation
+    if (!email || !password) {
+        showMessage(messageDiv, 'Please fill in all fields', 'error');
+        return;
+    }
     
-    // Validate passwords match
     if (password !== confirmPassword) {
         showMessage(messageDiv, 'Passwords do not match', 'error');
         return;
     }
     
-    // Validate password length
     if (password.length < 6) {
-        showMessage(messageDiv, 'Password must be at least 6 characters long', 'error');
+        showMessage(messageDiv, 'Password must be at least 6 characters', 'error');
         return;
     }
     
     // Show loading state
-    setButtonLoading(submitBtn, 'Creating account...');
-    clearMessage(messageDiv);
+    setButtonLoading(submitBtn, 'Creating Account...');
     
     try {
-        // Register user
-        const data = await registerUser(email, password);
+        const result = await registerUser(email, password);
         
-        if (data.success) {
-            showMessage(messageDiv, 'Account created successfully! Redirecting to dashboard...', 'success');
+        if (result.success) {
+            showMessage(messageDiv, result.message, 'success');
+            // Store user in localStorage for immediate login
+            localStorage.setItem('currentUser', JSON.stringify(result.user));
             
-            // Store user info in localStorage
-            localStorage.setItem('currentUser', JSON.stringify(data.user));
-            console.log('Current user set:', data.user);
-            
-            // Redirect to dashboard
+            // Redirect to dashboard after a short delay
             setTimeout(() => {
                 window.location.href = 'dashboard.html';
-            }, 2000);
+            }, 1500);
         } else {
-            showMessage(messageDiv, data.message || 'Registration failed', 'error');
+            showMessage(messageDiv, result.message, 'error');
         }
     } catch (error) {
-        console.error('Registration error:', error);
         showMessage(messageDiv, 'Registration failed. Please try again.', 'error');
     } finally {
-        // Reset button state
-        resetButton(submitBtn, 'Register');
+        resetButton(submitBtn, 'Create Account');
     }
 }
 
@@ -152,50 +148,51 @@ async function handleLogin(event) {
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
     const messageDiv = document.getElementById('message');
-    const submitBtn = document.querySelector('.login-btn');
+    const submitBtn = document.querySelector('#loginForm button[type="submit"]');
     
-    console.log('Login form submitted for:', email);
+    // Validation
+    if (!email || !password) {
+        showMessage(messageDiv, 'Please fill in all fields', 'error');
+        return;
+    }
     
     // Show loading state
-    setButtonLoading(submitBtn, 'Logging in...');
-    clearMessage(messageDiv);
+    setButtonLoading(submitBtn, 'Signing In...');
     
     try {
-        // Login user
-        const data = await loginUser(email, password);
+        const result = await loginUser(email, password);
         
-        if (data.success) {
-            showMessage(messageDiv, 'Login successful! Redirecting...', 'success');
+        if (result.success) {
+            showMessage(messageDiv, result.message, 'success');
+            // Store user in localStorage
+            localStorage.setItem('currentUser', JSON.stringify(result.user));
             
-            // Store user info in localStorage
-            localStorage.setItem('currentUser', JSON.stringify(data.user));
-            console.log('Current user set:', data.user);
-            
-            // Redirect to dashboard
+            // Redirect to dashboard after a short delay
             setTimeout(() => {
                 window.location.href = 'dashboard.html';
             }, 1500);
         } else {
-            showMessage(messageDiv, data.message || 'Login failed', 'error');
+            showMessage(messageDiv, result.message, 'error');
         }
     } catch (error) {
-        console.error('Login error:', error);
         showMessage(messageDiv, 'Login failed. Please try again.', 'error');
     } finally {
-        // Reset button state
-        resetButton(submitBtn, 'Login');
+        resetButton(submitBtn, 'Sign In');
     }
 }
 
-// Utility functions
+// Utility functions for forms
 function showMessage(element, message, type) {
+    if (!element) return;
+    
     element.textContent = message;
-    element.style.color = type === 'success' ? '#28a745' : '#dc3545';
-}
-
-function clearMessage(element) {
-    element.textContent = '';
-    element.style.color = '';
+    element.className = `message ${type}`;
+    element.style.display = 'block';
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        element.style.display = 'none';
+    }, 5000);
 }
 
 function setButtonLoading(button, text) {
@@ -231,6 +228,8 @@ class TaskManager {
     constructor() {
         this.tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
         this.currentUser = checkAuth();
+        this.currentView = 'list';
+        this.selectedTasks = new Set();
         
         if (!this.currentUser) {
             console.log('No authenticated user, redirecting to login');
@@ -240,20 +239,114 @@ class TaskManager {
         
         console.log('TaskManager initialized for user:', this.currentUser.email);
         this.init();
-        this.addSampleTasksIfEmpty();
     }
 
     init() {
+        this.setupSidebarNavigation();
+        this.setupMobileMenu();
         this.setupEventListeners();
-        this.renderTasks();
-        this.updateTaskCount();
-        this.updateUserInfo();
+        this.showLoadingState();
+        
+        // Simulate loading delay for better UX
+        setTimeout(() => {
+            this.hideLoadingState();
+            this.renderTasks();
+            this.updateTaskCount();
+            this.updateUserInfo();
+            this.addSampleTasksIfEmpty();
+        }, 1000);
+    }
+
+    setupSidebarNavigation() {
+        const navItems = document.querySelectorAll('.nav-item');
+        navItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                navItems.forEach(nav => nav.classList.remove('active'));
+                item.classList.add('active');
+            });
+        });
+    }
+
+    setupMobileMenu() {
+        const menuToggle = document.getElementById('menu-toggle');
+        const sidebar = document.querySelector('.sidebar');
+        
+        if (menuToggle && sidebar) {
+            menuToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('open');
+            });
+            
+            // Close sidebar when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
+                    sidebar.classList.remove('open');
+                }
+            });
+        }
+    }
+
+    showLoadingState() {
+        const loadingState = document.getElementById('loading-state');
+        const taskList = document.getElementById('task-list');
+        const emptyState = document.getElementById('empty-state');
+        
+        if (loadingState) loadingState.style.display = 'block';
+        if (taskList) taskList.style.display = 'none';
+        if (emptyState) emptyState.style.display = 'none';
+    }
+
+    hideLoadingState() {
+        const loadingState = document.getElementById('loading-state');
+        const taskList = document.getElementById('task-list');
+        
+        if (loadingState) loadingState.style.display = 'none';
+        if (taskList) taskList.style.display = 'block';
+    }
+
+    showToast(message, type = 'success') {
+        const toastContainer = document.getElementById('toast-container');
+        if (!toastContainer) return;
+
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        
+        const icon = this.getToastIcon(type);
+        
+        toast.innerHTML = `
+            <i class="${icon}"></i>
+            <div class="toast-content">
+                <div class="toast-title">${type.charAt(0).toUpperCase() + type.slice(1)}</div>
+                <div class="toast-message">${message}</div>
+            </div>
+        `;
+
+        toastContainer.appendChild(toast);
+
+        // Auto-remove after 4 seconds
+        setTimeout(() => {
+            toast.style.animation = 'slideOutRight 0.3s ease';
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        }, 4000);
+    }
+
+    getToastIcon(type) {
+        switch (type) {
+            case 'success': return 'fas fa-check-circle';
+            case 'error': return 'fas fa-exclamation-circle';
+            case 'warning': return 'fas fa-exclamation-triangle';
+            default: return 'fas fa-info-circle';
+        }
     }
 
     updateUserInfo() {
         const userInfo = document.getElementById('user-info');
         if (userInfo && this.currentUser) {
-            userInfo.textContent = `Welcome, ${this.currentUser.email}`;
+            userInfo.textContent = this.currentUser.email;
         }
     }
 
@@ -264,10 +357,21 @@ class TaskManager {
             addTaskBtn.addEventListener('click', () => this.openModal());
         }
 
+        // Empty state add task button
+        const emptyAddTaskBtn = document.getElementById('empty-add-task-btn');
+        if (emptyAddTaskBtn) {
+            emptyAddTaskBtn.addEventListener('click', () => this.openModal());
+        }
+
         // Modal events
         const modal = document.getElementById('task-modal');
+        const modalClose = document.getElementById('modal-close');
         const cancelBtn = document.getElementById('cancel-btn');
         const taskForm = document.getElementById('task-form');
+
+        if (modalClose) {
+            modalClose.addEventListener('click', () => this.closeModal());
+        }
 
         if (cancelBtn) {
             cancelBtn.addEventListener('click', () => this.closeModal());
@@ -283,6 +387,23 @@ class TaskManager {
                 if (e.target === modal) {
                     this.closeModal();
                 }
+            });
+        }
+
+        // View toggle buttons
+        const viewBtns = document.querySelectorAll('.view-btn');
+        viewBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const view = btn.dataset.view;
+                this.toggleView(view);
+            });
+        });
+
+        // Bulk actions button
+        const bulkActionsBtn = document.querySelector('.bulk-actions-btn');
+        if (bulkActionsBtn) {
+            bulkActionsBtn.addEventListener('click', () => {
+                this.showToast('Bulk actions coming soon!', 'warning');
             });
         }
 
@@ -309,6 +430,24 @@ class TaskManager {
         }
     }
 
+    toggleView(view) {
+        this.currentView = view;
+        const taskList = document.getElementById('task-list');
+        const viewBtns = document.querySelectorAll('.view-btn');
+        
+        // Update button states
+        viewBtns.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.view === view);
+        });
+        
+        // Update task list class
+        if (taskList) {
+            taskList.classList.toggle('grid-view', view === 'grid');
+        }
+        
+        this.renderTasks();
+    }
+
     // Task CRUD Operations
     addTask(taskData) {
         const task = {
@@ -318,6 +457,7 @@ class TaskManager {
             description: taskData.description,
             dueDate: taskData.dueDate,
             category: taskData.category,
+            priority: taskData.priority || 'medium',
             status: 'incomplete',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
@@ -328,6 +468,7 @@ class TaskManager {
         this.renderTasks();
         this.updateTaskCount();
         
+        this.showToast('Task added successfully!', 'success');
         console.log('Task added:', task);
         return task;
     }
@@ -344,6 +485,7 @@ class TaskManager {
             this.renderTasks();
             this.updateTaskCount();
             
+            this.showToast('Task updated successfully!', 'success');
             console.log('Task updated:', this.tasks[taskIndex]);
             return this.tasks[taskIndex];
         }
@@ -358,6 +500,7 @@ class TaskManager {
             this.renderTasks();
             this.updateTaskCount();
             
+            this.showToast('Task deleted successfully!', 'success');
             console.log('Task deleted:', task);
         }
     }
@@ -365,12 +508,15 @@ class TaskManager {
     toggleTaskStatus(taskId) {
         const task = this.tasks.find(task => task.id === taskId);
         if (task) {
-            task.status = task.status === 'completed' ? 'incomplete' : 'completed';
+            const newStatus = task.status === 'completed' ? 'incomplete' : 'completed';
+            task.status = newStatus;
             task.updatedAt = new Date().toISOString();
             this.saveTasks();
             this.renderTasks();
             this.updateTaskCount();
             
+            const statusText = newStatus === 'completed' ? 'completed' : 'marked as pending';
+            this.showToast(`Task ${statusText}!`, 'success');
             console.log('Task status toggled:', task);
         }
     }
@@ -415,10 +561,9 @@ class TaskManager {
                         return new Date(a.dueDate) - new Date(b.dueDate);
                     case 'date-desc':
                         return new Date(b.dueDate) - new Date(a.dueDate);
-                    case 'status':
-                        return a.status.localeCompare(b.status);
-                    case 'category':
-                        return a.category.localeCompare(b.category);
+                    case 'priority':
+                        const priorityOrder = { 'urgent': 4, 'high': 3, 'medium': 2, 'low': 1 };
+                        return priorityOrder[b.priority] - priorityOrder[a.priority];
                     default:
                         return 0;
                 }
@@ -431,49 +576,64 @@ class TaskManager {
     // Render tasks
     renderTasks() {
         const taskList = document.getElementById('task-list');
+        const emptyState = document.getElementById('empty-state');
         if (!taskList) return;
 
         const filteredTasks = this.getFilteredTasks();
 
         if (filteredTasks.length === 0) {
-            taskList.innerHTML = `
-                <div style="text-align: center; padding: 2rem; color: #666;">
-                    <i class="fas fa-tasks" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
-                    <p>No tasks found. Create your first task to get started!</p>
-                </div>
-            `;
+            taskList.style.display = 'none';
+            if (emptyState) {
+                emptyState.style.display = 'block';
+            }
             return;
         }
 
+        taskList.style.display = 'block';
+        if (emptyState) {
+            emptyState.style.display = 'none';
+        }
+
         taskList.innerHTML = filteredTasks.map(task => this.createTaskHTML(task)).join('');
+        this.updateTaskSummary(filteredTasks.length);
     }
 
     createTaskHTML(task) {
         const isCompleted = task.status === 'completed';
         const dueDate = new Date(task.dueDate);
         const isOverdue = dueDate < new Date() && !isCompleted;
+        const priorityClass = task.priority ? `${task.priority}-priority` : '';
         
         return `
-            <li class="task-item ${isCompleted ? 'completed' : ''} ${isOverdue ? 'overdue' : ''}">
-                <input type="checkbox" 
-                       ${isCompleted ? 'checked' : ''} 
-                       onchange="taskManager.toggleTaskStatus('${task.id}')">
+            <li class="task-item ${isCompleted ? 'completed' : ''} ${isOverdue ? 'overdue' : ''} ${priorityClass}">
+                <div class="task-checkbox">
+                    <input type="checkbox" 
+                           ${isCompleted ? 'checked' : ''} 
+                           onchange="taskManager.toggleTaskStatus('${task.id}')">
+                </div>
                 
-                <div class="task-details">
-                    <p class="task-title">${this.escapeHtml(task.title)}</p>
-                    ${task.description ? `<p>${this.escapeHtml(task.description)}</p>` : ''}
-                    <div class="task-info">
-                        <span><i class="fas fa-calendar"></i> Due: ${this.formatDate(task.dueDate)}</span>
-                        <span class="task-category cat-${task.category.toLowerCase()}">${task.category}</span>
-                        ${isOverdue ? '<span style="color: #e74c3c;"><i class="fas fa-exclamation-triangle"></i> Overdue</span>' : ''}
+                <div class="task-content">
+                    <div class="task-details">
+                        <div class="task-title">${this.escapeHtml(task.title)}</div>
+                        ${task.description ? `<div class="task-description">${this.escapeHtml(task.description)}</div>` : ''}
+                    </div>
+                    
+                    <div class="task-meta">
+                        <div class="task-meta-item">
+                            <i class="fas fa-calendar"></i>
+                            <span>${this.formatDate(task.dueDate)}</span>
+                        </div>
+                        <div class="task-category">${task.category}</div>
+                        <div class="task-priority ${task.priority}">${task.priority}</div>
+                        ${isOverdue ? '<div class="task-meta-item"><i class="fas fa-exclamation-triangle"></i> Overdue</div>' : ''}
                     </div>
                 </div>
                 
                 <div class="task-actions">
-                    <button class="btn edit-btn" onclick="taskManager.editTask('${task.id}')" title="Edit Task">
+                    <button class="btn btn-outline" onclick="taskManager.editTask('${task.id}')" title="Edit Task">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn delete-btn" onclick="taskManager.deleteTask('${task.id}')" title="Delete Task">
+                    <button class="btn btn-outline" onclick="taskManager.deleteTask('${task.id}')" title="Delete Task">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -498,6 +658,7 @@ class TaskManager {
                 document.getElementById('task-desc').value = task.description || '';
                 document.getElementById('task-due-date').value = task.dueDate;
                 document.getElementById('task-category').value = task.category;
+                document.getElementById('task-priority').value = task.priority || 'medium';
             }
         } else {
             // Add mode
@@ -508,6 +669,7 @@ class TaskManager {
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
             document.getElementById('task-due-date').value = tomorrow.toISOString().split('T')[0];
+            document.getElementById('task-priority').value = 'medium';
         }
 
         modal.style.display = 'flex';
@@ -530,11 +692,12 @@ class TaskManager {
             title: document.getElementById('task-title').value.trim(),
             description: document.getElementById('task-desc').value.trim(),
             dueDate: document.getElementById('task-due-date').value,
-            category: document.getElementById('task-category').value
+            category: document.getElementById('task-category').value,
+            priority: document.getElementById('task-priority').value
         };
 
         if (!taskData.title) {
-            alert('Please enter a task title');
+            this.showToast('Please enter a task title', 'error');
             return;
         }
 
@@ -572,18 +735,45 @@ class TaskManager {
     }
 
     updateTaskCount() {
-        const totalTasks = this.tasks.filter(task => task.userId === this.currentUser.id).length;
-        const completedTasks = this.tasks.filter(task => task.userId === this.currentUser.id && task.status === 'completed').length;
+        const userTasks = this.tasks.filter(task => task.userId === this.currentUser.id);
+        const totalTasks = userTasks.length;
+        const completedTasks = userTasks.filter(task => task.status === 'completed').length;
         const pendingTasks = totalTasks - completedTasks;
+        const overdueTasks = userTasks.filter(task => {
+            const dueDate = new Date(task.dueDate);
+            return dueDate < new Date() && task.status !== 'completed';
+        }).length;
         
         // Update the counter display
         const totalTasksElement = document.getElementById('total-tasks');
         const completedTasksElement = document.getElementById('completed-tasks');
         const pendingTasksElement = document.getElementById('pending-tasks');
+        const overdueTasksElement = document.getElementById('overdue-tasks');
         
         if (totalTasksElement) totalTasksElement.textContent = totalTasks;
         if (completedTasksElement) completedTasksElement.textContent = completedTasks;
         if (pendingTasksElement) pendingTasksElement.textContent = pendingTasks;
+        if (overdueTasksElement) overdueTasksElement.textContent = overdueTasks;
+    }
+
+    updateTaskSummary(taskCount) {
+        const summaryText = document.getElementById('task-summary-text');
+        if (summaryText) {
+            const filterCategory = document.getElementById('filter-category')?.value;
+            const filterStatus = document.getElementById('filter-status')?.value;
+            
+            let summary = `Showing ${taskCount} task${taskCount !== 1 ? 's' : ''}`;
+            
+            if (filterCategory && filterCategory !== 'all') {
+                summary += ` in ${filterCategory}`;
+            }
+            
+            if (filterStatus && filterStatus !== 'all') {
+                summary += ` (${filterStatus})`;
+            }
+            
+            summaryText.textContent = summary;
+        }
     }
 
     addSampleTasksIfEmpty() {
@@ -603,6 +793,7 @@ class TaskManager {
                     description: 'This is your first task. Click the checkbox to mark it as complete.',
                     dueDate: tomorrow.toISOString().split('T')[0],
                     category: 'Personal',
+                    priority: 'medium',
                     status: 'incomplete',
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString()
@@ -614,6 +805,7 @@ class TaskManager {
                     description: 'Try adding, editing, and deleting tasks. Use the search and filter options to organize your tasks.',
                     dueDate: nextWeek.toISOString().split('T')[0],
                     category: 'Work',
+                    priority: 'high',
                     status: 'incomplete',
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString()
