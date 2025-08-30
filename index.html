@@ -913,7 +913,7 @@
                 <h3 style="margin-bottom: 1rem;">Ready to get started?</h3>
                 <p style="color: var(--text-light); margin-bottom: 2rem;">Access your personalized dashboard and start
                     managing tasks like a pro.</p>
-                <button onclick="window.location.href='dashboard.html'"
+                <button onclick="goToDashboard()"
                     style="background: var(--primary-blue); color: white; padding: 1rem 2rem; border: none; border-radius: 2rem; cursor: pointer; font-size: 1.1rem;">Go
                     to Dashboard</button>
             </div>
@@ -1099,7 +1099,7 @@
                 <ul>
                     <li><a href="features.html">Features</a></li>
                     <li><a href="pricing.html">Pricing</a></li>
-                    <li><a href="dashboard.html">Dashboard</a></li>
+                    <li><a href="#" onclick="goToDashboard(); return false;">Dashboard</a></li>
                     <li><a href="login.html">Get Started</a></li>
                 </ul>
             </div>
@@ -1279,6 +1279,9 @@
             });
         });
     </script>
+    
+    <!-- Include the main script file -->
+    <script src="script.js"></script>
 </body>
 
 </html>

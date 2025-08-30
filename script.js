@@ -220,7 +220,81 @@ function checkAuth() {
 function logout() {
     localStorage.removeItem('currentUser');
     console.log('User logged out');
-    window.location.href = 'login.html';
+    window.location.href = 'index.html';
+}
+
+// Go to dashboard function with authentication check
+function goToDashboard() {
+    const currentUser = checkAuth();
+    if (currentUser) {
+        console.log('User authenticated, redirecting to dashboard');
+        window.location.href = 'dashboard.html';
+    } else {
+        console.log('User not authenticated, redirecting to login');
+        // Show a more elegant message to the user
+        showDashboardMessage('Please log in to access your dashboard');
+        // Redirect to login page after a short delay
+        setTimeout(() => {
+            window.location.href = 'login.html';
+        }, 2000);
+    }
+}
+
+// Show dashboard access message
+function showDashboardMessage(message) {
+    // Remove any existing message
+    const existingMessage = document.getElementById('dashboard-message');
+    if (existingMessage) {
+        existingMessage.remove();
+    }
+    
+    // Create message element
+    const messageDiv = document.createElement('div');
+    messageDiv.id = 'dashboard-message';
+    messageDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #4a90e2;
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 10000;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 0.9rem;
+        max-width: 300px;
+        animation: slideInRight 0.3s ease;
+    `;
+    messageDiv.textContent = message;
+    
+    // Add animation styles
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    document.body.appendChild(messageDiv);
+    
+    // Auto-remove after 4 seconds
+    setTimeout(() => {
+        if (messageDiv.parentNode) {
+            messageDiv.style.animation = 'slideOutRight 0.3s ease';
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.parentNode.removeChild(messageDiv);
+                }
+            }, 300);
+        }
+    }, 4000);
 }
 
 // Task Management System
@@ -232,8 +306,8 @@ class TaskManager {
         this.selectedTasks = new Set();
         
         if (!this.currentUser) {
-            console.log('No authenticated user, redirecting to login');
-            window.location.href = 'login.html';
+            console.log('No authenticated user, redirecting to index');
+            window.location.href = 'index.html';
             return;
         }
         
@@ -254,6 +328,7 @@ class TaskManager {
             this.updateTaskCount();
             this.updateUserInfo();
             this.addSampleTasksIfEmpty();
+            this.addSampleNotificationsIfEmpty();
         }, 1000);
     }
 
@@ -428,6 +503,15 @@ class TaskManager {
         if (sortTasks) {
             sortTasks.addEventListener('change', () => this.renderTasks());
         }
+
+        // Setup additional functionality
+        this.setupSettingsEvents();
+        this.setupAnalyticsEvents();
+        this.setupCalendarEvents();
+        this.setupNotificationsEvents();
+        
+        // Initialize notifications badge
+        this.updateNotificationBadge();
     }
 
     toggleView(view) {
@@ -820,6 +904,683 @@ class TaskManager {
             console.log('Sample tasks added');
         }
     }
+
+    addSampleNotificationsIfEmpty() {
+        const notifications = this.getNotifications();
+        if (notifications.length === 0) {
+            const sampleNotifications = [
+                {
+                    id: Date.now().toString(),
+                    title: 'Welcome to TaskFlow!',
+                    message: 'Your task management journey begins now. Start by creating your first task.',
+                    type: 'system',
+                    timestamp: new Date().toISOString(),
+                    read: false
+                },
+                {
+                    id: (Date.now() + 1).toString(),
+                    title: 'Quick Tip',
+                    message: 'Use the calendar view to see all your tasks in a monthly overview.',
+                    type: 'system',
+                    timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
+                    read: false
+                },
+                {
+                    id: (Date.now() + 2).toString(),
+                    title: 'Feature Available',
+                    message: 'Check out the analytics section to track your productivity progress.',
+                    type: 'system',
+                    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
+                    read: true
+                }
+            ];
+
+            localStorage.setItem('notifications', JSON.stringify(sampleNotifications));
+            this.updateNotificationBadge();
+            console.log('Sample notifications added');
+        }
+    }
+
+    // Settings Modal Functions
+    setupSettingsEvents() {
+        const settingsBtn = document.querySelector('.settings-btn');
+        const settingsModal = document.getElementById('settings-modal');
+        const closeSettingsBtn = document.querySelector('.settings-modal .modal-close');
+        const saveSettingsBtn = document.querySelector('.save-settings-btn');
+        const resetSettingsBtn = document.querySelector('.reset-settings-btn');
+
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', () => this.openSettingsModal());
+        }
+
+        if (closeSettingsBtn) {
+            closeSettingsBtn.addEventListener('click', () => this.closeSettingsModal());
+        }
+
+        if (saveSettingsBtn) {
+            saveSettingsBtn.addEventListener('click', () => this.saveSettings());
+        }
+
+        if (resetSettingsBtn) {
+            resetSettingsBtn.addEventListener('click', () => this.resetSettings());
+        }
+
+        // Close modal when clicking outside
+        if (settingsModal) {
+            settingsModal.addEventListener('click', (e) => {
+                if (e.target === settingsModal) {
+                    this.closeSettingsModal();
+                }
+            });
+        }
+    }
+
+    openSettingsModal() {
+        const settingsModal = document.getElementById('settings-modal');
+        if (settingsModal) {
+            this.loadSettings();
+            settingsModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    closeSettingsModal() {
+        const settingsModal = document.getElementById('settings-modal');
+        if (settingsModal) {
+            settingsModal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    }
+
+    loadSettings() {
+        const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+        
+        // Load theme preference
+        const themeSelect = document.getElementById('theme-select');
+        if (themeSelect) {
+            themeSelect.value = settings.theme || 'light';
+        }
+
+        // Load notification settings
+        const emailNotifications = document.getElementById('email-notifications');
+        const pushNotifications = document.getElementById('push-notifications');
+        const reminderTime = document.getElementById('reminder-time');
+
+        if (emailNotifications) {
+            emailNotifications.checked = settings.emailNotifications !== false;
+        }
+        if (pushNotifications) {
+            pushNotifications.checked = settings.pushNotifications !== false;
+        }
+        if (reminderTime) {
+            reminderTime.value = settings.reminderTime || '09:00';
+        }
+    }
+
+    saveSettings() {
+        const settings = {
+            theme: document.getElementById('theme-select')?.value || 'light',
+            emailNotifications: document.getElementById('email-notifications')?.checked !== false,
+            pushNotifications: document.getElementById('push-notifications')?.checked !== false,
+            reminderTime: document.getElementById('reminder-time')?.value || '09:00'
+        };
+
+        localStorage.setItem('userSettings', JSON.stringify(settings));
+        this.showToast('Settings saved successfully!', 'success');
+        this.closeSettingsModal();
+    }
+
+    resetSettings() {
+        if (confirm('Are you sure you want to reset all settings to default?')) {
+            localStorage.removeItem('userSettings');
+            this.loadSettings();
+            this.showToast('Settings reset to default!', 'info');
+        }
+    }
+
+    // Analytics Modal Functions
+    setupAnalyticsEvents() {
+        const analyticsBtn = document.querySelector('.analytics-btn');
+        const analyticsModal = document.getElementById('analytics-modal');
+        const closeAnalyticsBtn = document.querySelector('.analytics-modal .modal-close');
+
+        if (analyticsBtn) {
+            analyticsBtn.addEventListener('click', () => this.openAnalyticsModal());
+        }
+
+        if (closeAnalyticsBtn) {
+            closeAnalyticsBtn.addEventListener('click', () => this.closeAnalyticsModal());
+        }
+
+        // Close modal when clicking outside
+        if (analyticsModal) {
+            analyticsModal.addEventListener('click', (e) => {
+                if (e.target === analyticsModal) {
+                    this.closeAnalyticsModal();
+                }
+            });
+        }
+    }
+
+    openAnalyticsModal() {
+        const analyticsModal = document.getElementById('analytics-modal');
+        if (analyticsModal) {
+            this.loadAnalytics();
+            analyticsModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    closeAnalyticsModal() {
+        const analyticsModal = document.getElementById('analytics-modal');
+        if (analyticsModal) {
+            analyticsModal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    }
+
+    loadAnalytics() {
+        this.calculateTaskCompletionRate();
+        this.calculateAverageCompletionTime();
+        this.calculateProductivityScore();
+        this.loadCategoryBreakdown();
+        this.loadWeeklyProgress();
+    }
+
+    calculateTaskCompletionRate() {
+        const userTasks = this.tasks.filter(task => task.userId === this.currentUser.id);
+        const completedTasks = userTasks.filter(task => task.status === 'complete');
+        const completionRate = userTasks.length > 0 ? (completedTasks.length / userTasks.length * 100).toFixed(1) : 0;
+        
+        const completionRateElement = document.getElementById('completion-rate');
+        if (completionRateElement) {
+            completionRateElement.textContent = `${completionRate}%`;
+        }
+    }
+
+    calculateAverageCompletionTime() {
+        const userTasks = this.tasks.filter(task => task.userId === this.currentUser.id && task.status === 'complete');
+        if (userTasks.length === 0) {
+            const avgTimeElement = document.getElementById('avg-completion-time');
+            if (avgTimeElement) {
+                avgTimeElement.textContent = 'N/A';
+            }
+            return;
+        }
+
+        let totalDays = 0;
+        userTasks.forEach(task => {
+            const created = new Date(task.createdAt);
+            const completed = new Date(task.updatedAt);
+            const daysDiff = (completed - created) / (1000 * 60 * 60 * 24);
+            totalDays += daysDiff;
+        });
+
+        const avgDays = (totalDays / userTasks.length).toFixed(1);
+        const avgTimeElement = document.getElementById('avg-completion-time');
+        if (avgTimeElement) {
+            avgTimeElement.textContent = `${avgDays} days`;
+        }
+    }
+
+    calculateProductivityScore() {
+        const userTasks = this.tasks.filter(task => task.userId === this.currentUser.id);
+        const completedTasks = userTasks.filter(task => task.status === 'complete');
+        const overdueTasks = userTasks.filter(task => {
+            if (task.status === 'complete') return false;
+            const dueDate = new Date(task.dueDate);
+            return dueDate < new Date();
+        });
+
+        let score = 0;
+        score += completedTasks.length * 10; // 10 points per completed task
+        score -= overdueTasks.length * 5; // -5 points per overdue task
+        score = Math.max(0, score); // Don't go below 0
+
+        const productivityScoreElement = document.getElementById('productivity-score');
+        if (productivityScoreElement) {
+            productivityScoreElement.textContent = score;
+        }
+    }
+
+    loadCategoryBreakdown() {
+        const userTasks = this.tasks.filter(task => task.userId === this.currentUser.id);
+        const categoryStats = {};
+        
+        userTasks.forEach(task => {
+            const category = task.category || 'Uncategorized';
+            if (!categoryStats[category]) {
+                categoryStats[category] = { total: 0, completed: 0 };
+            }
+            categoryStats[category].total++;
+            if (task.status === 'complete') {
+                categoryStats[category].completed++;
+            }
+        });
+
+        const categoryBreakdownElement = document.getElementById('category-breakdown');
+        if (categoryBreakdownElement) {
+            let html = '';
+            Object.entries(categoryStats).forEach(([category, stats]) => {
+                const percentage = stats.total > 0 ? (stats.completed / stats.total * 100).toFixed(1) : 0;
+                html += `
+                    <div class="category-stat">
+                        <div class="category-info">
+                            <span class="category-name">${category}</span>
+                            <span class="category-count">${stats.completed}/${stats.total}</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${percentage}%"></div>
+                        </div>
+                        <span class="percentage">${percentage}%</span>
+                    </div>
+                `;
+            });
+            categoryBreakdownElement.innerHTML = html;
+        }
+    }
+
+    loadWeeklyProgress() {
+        const userTasks = this.tasks.filter(task => task.userId === this.currentUser.id);
+        const today = new Date();
+        const weekStart = new Date(today);
+        weekStart.setDate(today.getDate() - today.getDay());
+
+        const weeklyStats = [];
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(weekStart);
+            date.setDate(weekStart.getDate() + i);
+            const dateStr = date.toISOString().split('T')[0];
+            
+            const dayTasks = userTasks.filter(task => {
+                const taskDate = new Date(task.updatedAt).toISOString().split('T')[0];
+                return taskDate === dateStr && task.status === 'complete';
+            });
+
+            weeklyStats.push({
+                day: date.toLocaleDateString('en-US', { weekday: 'short' }),
+                count: dayTasks.length
+            });
+        }
+
+        const weeklyProgressElement = document.getElementById('weekly-progress');
+        if (weeklyProgressElement) {
+            const maxCount = Math.max(...weeklyStats.map(stat => stat.count), 1);
+            let html = '';
+            weeklyStats.forEach(stat => {
+                const height = (stat.count / maxCount * 100);
+                html += `
+                    <div class="day-stat">
+                        <div class="day-bar" style="height: ${height}%"></div>
+                        <span class="day-label">${stat.day}</span>
+                        <span class="day-count">${stat.count}</span>
+                    </div>
+                `;
+            });
+            weeklyProgressElement.innerHTML = html;
+        }
+    }
+
+    // Calendar Modal Functions
+    setupCalendarEvents() {
+        const calendarBtn = document.querySelector('.calendar-btn');
+        const calendarModal = document.getElementById('calendar-modal');
+        const closeCalendarBtn = document.querySelector('.calendar-modal .modal-close');
+        const prevMonthBtn = document.querySelector('.prev-month-btn');
+        const nextMonthBtn = document.querySelector('.next-month-btn');
+
+        if (calendarBtn) {
+            calendarBtn.addEventListener('click', () => this.openCalendarModal());
+        }
+
+        if (closeCalendarBtn) {
+            closeCalendarBtn.addEventListener('click', () => this.closeCalendarModal());
+        }
+
+        if (prevMonthBtn) {
+            prevMonthBtn.addEventListener('click', () => this.changeMonth(-1));
+        }
+
+        if (nextMonthBtn) {
+            nextMonthBtn.addEventListener('click', () => this.changeMonth(1));
+        }
+
+        // Close modal when clicking outside
+        if (calendarModal) {
+            calendarModal.addEventListener('click', (e) => {
+                if (e.target === calendarModal) {
+                    this.closeCalendarModal();
+                }
+            });
+        }
+    }
+
+    openCalendarModal() {
+        const calendarModal = document.getElementById('calendar-modal');
+        if (calendarModal) {
+            this.currentMonth = new Date();
+            this.renderCalendar();
+            calendarModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    closeCalendarModal() {
+        const calendarModal = document.getElementById('calendar-modal');
+        if (calendarModal) {
+            calendarModal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    }
+
+    changeMonth(delta) {
+        if (!this.currentMonth) {
+            this.currentMonth = new Date();
+        }
+        this.currentMonth.setMonth(this.currentMonth.getMonth() + delta);
+        this.renderCalendar();
+    }
+
+    renderCalendar() {
+        const calendarBody = document.getElementById('calendar-body');
+        const monthYearHeader = document.getElementById('month-year');
+        
+        if (!calendarBody || !monthYearHeader) return;
+
+        const year = this.currentMonth.getFullYear();
+        const month = this.currentMonth.getMonth();
+        
+        monthYearHeader.textContent = this.currentMonth.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long' 
+        });
+
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const startDate = new Date(firstDay);
+        startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+        let html = '';
+        for (let week = 0; week < 6; week++) {
+            html += '<tr>';
+            for (let day = 0; day < 7; day++) {
+                const currentDate = new Date(startDate);
+                currentDate.setDate(startDate.getDate() + (week * 7) + day);
+                
+                const isCurrentMonth = currentDate.getMonth() === month;
+                const isToday = currentDate.toDateString() === new Date().toDateString();
+                const dateStr = currentDate.toISOString().split('T')[0];
+                
+                // Check if there are tasks for this date
+                const userTasks = this.tasks.filter(task => task.userId === this.currentUser.id);
+                const dayTasks = userTasks.filter(task => {
+                    const taskDate = new Date(task.dueDate).toISOString().split('T')[0];
+                    return taskDate === dateStr;
+                });
+                
+                const hasTasks = dayTasks.length > 0;
+                const completedTasks = dayTasks.filter(task => task.status === 'complete').length;
+                const overdueTasks = dayTasks.filter(task => {
+                    if (task.status === 'complete') return false;
+                    return new Date(task.dueDate) < new Date();
+                }).length;
+
+                let className = 'calendar-day';
+                if (!isCurrentMonth) className += ' other-month';
+                if (isToday) className += ' today';
+                if (hasTasks) className += ' has-tasks';
+                if (overdueTasks > 0) className += ' overdue';
+
+                html += `
+                    <td class="${className}" data-date="${dateStr}">
+                        <span class="day-number">${currentDate.getDate()}</span>
+                        ${hasTasks ? `<div class="task-indicator">
+                            <span class="completed-count">${completedTasks}</span>
+                            <span class="total-count">/${dayTasks.length}</span>
+                        </div>` : ''}
+                    </td>
+                `;
+            }
+            html += '</tr>';
+        }
+        
+        calendarBody.innerHTML = html;
+
+        // Add click event to show day tasks
+        const dayCells = calendarBody.querySelectorAll('.calendar-day');
+        dayCells.forEach(cell => {
+            cell.addEventListener('click', () => {
+                const date = cell.dataset.date;
+                this.showDayTasks(date);
+            });
+        });
+    }
+
+    showDayTasks(date) {
+        const userTasks = this.tasks.filter(task => task.userId === this.currentUser.id);
+        const dayTasks = userTasks.filter(task => {
+            const taskDate = new Date(task.dueDate).toISOString().split('T')[0];
+            return taskDate === date;
+        });
+
+        const dayTasksContainer = document.getElementById('day-tasks');
+        const dayTasksTitle = document.getElementById('day-tasks-title');
+        
+        if (dayTasksTitle) {
+            const displayDate = new Date(date).toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            dayTasksTitle.textContent = `Tasks for ${displayDate}`;
+        }
+
+        if (dayTasksContainer) {
+            if (dayTasks.length === 0) {
+                dayTasksContainer.innerHTML = '<p class="no-tasks">No tasks scheduled for this day.</p>';
+            } else {
+                let html = '';
+                dayTasks.forEach(task => {
+                    const isOverdue = new Date(task.dueDate) < new Date() && task.status !== 'complete';
+                    html += `
+                        <div class="day-task-item ${task.status === 'complete' ? 'completed' : ''} ${isOverdue ? 'overdue' : ''}">
+                            <div class="task-checkbox">
+                                <input type="checkbox" ${task.status === 'complete' ? 'checked' : ''} 
+                                       onchange="taskManager.toggleTaskStatus('${task.id}')">
+                            </div>
+                            <div class="task-content">
+                                <h4 class="task-title">${task.title}</h4>
+                                <p class="task-description">${task.description || ''}</p>
+                                <div class="task-meta">
+                                    <span class="task-category">${task.category}</span>
+                                    <span class="task-priority ${task.priority}">${task.priority}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                dayTasksContainer.innerHTML = html;
+            }
+        }
+    }
+
+    // Notifications Panel Functions
+    setupNotificationsEvents() {
+        const notificationsBtn = document.querySelector('.notifications-btn');
+        const notificationsPanel = document.getElementById('notifications-panel');
+        const closeNotificationsBtn = document.querySelector('.close-notifications-btn');
+        const markAllReadBtn = document.querySelector('.mark-all-read-btn');
+
+        if (notificationsBtn) {
+            notificationsBtn.addEventListener('click', () => this.toggleNotificationsPanel());
+        }
+
+        if (closeNotificationsBtn) {
+            closeNotificationsBtn.addEventListener('click', () => this.closeNotificationsPanel());
+        }
+
+        if (markAllReadBtn) {
+            markAllReadBtn.addEventListener('click', () => this.markAllNotificationsRead());
+        }
+
+        // Close panel when clicking outside
+        document.addEventListener('click', (e) => {
+            if (notificationsPanel && !notificationsPanel.contains(e.target) && 
+                !notificationsBtn?.contains(e.target)) {
+                this.closeNotificationsPanel();
+            }
+        });
+    }
+
+    toggleNotificationsPanel() {
+        const notificationsPanel = document.getElementById('notifications-panel');
+        if (notificationsPanel) {
+            const isOpen = notificationsPanel.classList.contains('active');
+            if (isOpen) {
+                this.closeNotificationsPanel();
+            } else {
+                this.openNotificationsPanel();
+            }
+        }
+    }
+
+    openNotificationsPanel() {
+        const notificationsPanel = document.getElementById('notifications-panel');
+        if (notificationsPanel) {
+            this.loadNotifications();
+            notificationsPanel.classList.add('active');
+        }
+    }
+
+    closeNotificationsPanel() {
+        const notificationsPanel = document.getElementById('notifications-panel');
+        if (notificationsPanel) {
+            notificationsPanel.classList.remove('active');
+        }
+    }
+
+    loadNotifications() {
+        const notifications = this.getNotifications();
+        const notificationsList = document.getElementById('notifications-list');
+        
+        if (notificationsList) {
+            if (notifications.length === 0) {
+                notificationsList.innerHTML = '<p class="no-notifications">No notifications</p>';
+            } else {
+                let html = '';
+                notifications.forEach(notification => {
+                    html += `
+                        <div class="notification-item ${notification.read ? 'read' : 'unread'}" 
+                             data-id="${notification.id}">
+                            <div class="notification-icon">
+                                <i class="${this.getNotificationIcon(notification.type)}"></i>
+                            </div>
+                            <div class="notification-content">
+                                <h4 class="notification-title">${notification.title}</h4>
+                                <p class="notification-message">${notification.message}</p>
+                                <span class="notification-time">${this.formatNotificationTime(notification.timestamp)}</span>
+                            </div>
+                            ${!notification.read ? '<div class="unread-indicator"></div>' : ''}
+                        </div>
+                    `;
+                });
+                notificationsList.innerHTML = html;
+
+                // Add click events to mark as read
+                const notificationItems = notificationsList.querySelectorAll('.notification-item');
+                notificationItems.forEach(item => {
+                    item.addEventListener('click', () => {
+                        const notificationId = item.dataset.id;
+                        this.markNotificationRead(notificationId);
+                    });
+                });
+            }
+        }
+
+        this.updateNotificationBadge();
+    }
+
+    getNotifications() {
+        return JSON.parse(localStorage.getItem('notifications') || '[]');
+    }
+
+    getNotificationIcon(type) {
+        const icons = {
+            'task': 'fas fa-tasks',
+            'reminder': 'fas fa-bell',
+            'overdue': 'fas fa-exclamation-triangle',
+            'completed': 'fas fa-check-circle',
+            'system': 'fas fa-info-circle'
+        };
+        return icons[type] || 'fas fa-bell';
+    }
+
+    formatNotificationTime(timestamp) {
+        const now = new Date();
+        const notificationTime = new Date(timestamp);
+        const diffMs = now - notificationTime;
+        const diffMins = Math.floor(diffMs / (1000 * 60));
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffHours < 24) return `${diffHours}h ago`;
+        if (diffDays < 7) return `${diffDays}d ago`;
+        return notificationTime.toLocaleDateString();
+    }
+
+    markNotificationRead(notificationId) {
+        const notifications = this.getNotifications();
+        const notification = notifications.find(n => n.id === notificationId);
+        if (notification) {
+            notification.read = true;
+            localStorage.setItem('notifications', JSON.stringify(notifications));
+            this.loadNotifications();
+        }
+    }
+
+    markAllNotificationsRead() {
+        const notifications = this.getNotifications();
+        notifications.forEach(notification => {
+            notification.read = true;
+        });
+        localStorage.setItem('notifications', JSON.stringify(notifications));
+        this.loadNotifications();
+        this.showToast('All notifications marked as read!', 'success');
+    }
+
+    updateNotificationBadge() {
+        const notifications = this.getNotifications();
+        const unreadCount = notifications.filter(n => !n.read).length;
+        const badge = document.querySelector('.notifications-btn .notification-badge');
+        
+        if (badge) {
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                badge.style.display = 'block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+    }
+
+    addNotification(title, message, type = 'system') {
+        const notifications = this.getNotifications();
+        const newNotification = {
+            id: Date.now().toString(),
+            title,
+            message,
+            type,
+            timestamp: new Date().toISOString(),
+            read: false
+        };
+        
+        notifications.unshift(newNotification);
+        localStorage.setItem('notifications', JSON.stringify(notifications));
+        this.updateNotificationBadge();
+    }
 }
 
 // Initialize forms when DOM is loaded
@@ -845,8 +1606,8 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Dashboard page detected');
         const user = checkAuth();
         if (!user) {
-            console.log('No authenticated user, redirecting to login');
-            window.location.href = 'login.html';
+            console.log('No authenticated user, redirecting to index');
+            window.location.href = 'index.html';
         } else {
             console.log('User authenticated, initializing TaskManager');
             // Initialize TaskManager for the dashboard
@@ -862,3 +1623,5 @@ window.registerUser = registerUser;
 window.loginUser = loginUser;
 window.logout = logout;
 window.checkAuth = checkAuth;
+window.goToDashboard = goToDashboard;
+window.showDashboardMessage = showDashboardMessage;
