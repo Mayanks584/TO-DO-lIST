@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { useNotifications } from './NotificationContext';
+import { supabase } from '../supabaseClient';
 
 const TaskContext = createContext();
 
@@ -14,112 +15,195 @@ export function TaskProvider({ children }) {
   const [tasks, setTasks] = useState([]);
   const [filter, setFilter] = useState({ category: 'all', status: 'all', search: '' });
 
+  // Fetch tasks when user logs in
   useEffect(() => {
     if (currentUser) {
-      const allTasks = JSON.parse(localStorage.getItem('tasks') || '[]');
-      // Determine if we should load all tasks or just this user's? 
-      // The script.js loads all tasks then filters in memory, but let's just load all into state
-      // and filter by user ID in the getters or here.
-      setTasks(allTasks);
+      fetchTasks();
     } else {
-        setTasks([]);
+      setTasks([]);
     }
   }, [currentUser]);
 
-  const saveTasksToStorage = (updatedTasks) => {
-    localStorage.setItem('tasks', JSON.stringify(updatedTasks));
-    setTasks(updatedTasks);
+  const fetchTasks = async () => {
+    try {
+      let { data: tasksData, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('user_id', currentUser.id) // Assuming your table has a user_id column
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setTasks(tasksData || []);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      showToast('Failed to fetch tasks', 'error');
+    }
   };
 
-  const addTask = (taskData) => {
+  const addTask = async (taskData) => {
     if (!currentUser) return;
 
-    const newTask = {
-      id: Date.now().toString(),
-      userId: currentUser.id,
-      title: taskData.title,
-      description: taskData.description,
-      dueDate: taskData.dueDate,
-      category: taskData.category,
-      priority: taskData.priority || 'medium',
-      status: 'incomplete',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+    try {
+      const newTask = {
+        user_id: currentUser.id,
+        title: taskData.title,
+        description: taskData.description,
+        due_date: taskData.dueDate, // Mapping camelCase JS to snake_case DB if needed
+        category: taskData.category,
+        priority: taskData.priority || 'medium',
+        status: 'incomplete',
+      };
 
-    const updatedTasks = [...tasks, newTask];
-    saveTasksToStorage(updatedTasks);
-    showToast('Task added successfully', 'success');
-    return newTask;
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert([newTask])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Map back from DB snake_case to JS camelCase if necessary, 
+      // or just keep snake_case in state if you update your components to match.
+      // For least friction, let's assume we adapt the state to match the DB or vice versa.
+      // Here we'll assume the DB returns snake_case fields.
+      // Ideally, we should standardize on one casing. 
+      // Let's convert the received data to our app's expected format to minimize component breakage:
+      const formattedTask = {
+          ...data,
+          userId: data.user_id,
+          dueDate: data.due_date,
+          createdAt: data.created_at,
+          updatedAt: data.updated_at
+      };
+
+      setTasks(prev => [formattedTask, ...prev]);
+      showToast('Task added successfully', 'success');
+      return formattedTask;
+    } catch (error) {
+      console.error('Error adding task:', error);
+      showToast('Failed to add task', 'error');
+    }
   };
 
-  const updateTask = (taskId, taskData) => {
-    const updatedTasks = tasks.map(task => 
-      task.id === taskId ? { ...task, ...taskData, updatedAt: new Date().toISOString() } : task
-    );
-    saveTasksToStorage(updatedTasks);
-    showToast('Task updated successfully', 'info');
+  const updateTask = async (taskId, taskData) => {
+    try {
+      // Prepare data for DB (snake_case)
+      const updates = {
+          title: taskData.title,
+          description: taskData.description,
+          due_date: taskData.dueDate,
+          category: taskData.category,
+          priority: taskData.priority,
+          status: taskData.status,
+          updated_at: new Date().toISOString()
+      };
+      
+      // Remove undefined fields
+      Object.keys(updates).forEach(key => updates[key] === undefined && delete updates[key]);
+
+      const { data, error } = await supabase
+        .from('tasks')
+        .update(updates)
+        .eq('id', taskId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setTasks(prev => prev.map(task => 
+        task.id === taskId ? { ...task, ...taskData, updatedAt: data.updated_at } : task
+      ));
+      showToast('Task updated successfully', 'info');
+    } catch (error) {
+      console.error('Error updating task:', error);
+      showToast('Failed to update task', 'error');
+    }
   };
 
-  const deleteTask = (taskId) => {
-    const updatedTasks = tasks.filter(task => task.id !== taskId);
-    saveTasksToStorage(updatedTasks);
-    showToast('Task deleted', 'error');
+  const deleteTask = async (taskId) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', taskId);
+
+      if (error) throw error;
+
+      setTasks(prev => prev.filter(task => task.id !== taskId));
+      showToast('Task deleted', 'error');
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      showToast('Failed to delete task', 'error');
+    }
   };
 
-  const toggleTaskStatus = (taskId) => {
-    let status = '';
-    const updatedTasks = tasks.map(task => {
-        if (task.id === taskId) {
-            status = task.status === 'completed' ? 'incomplete' : 'completed';
-            return {
-                ...task,
-                status: status,
-                updatedAt: new Date().toISOString()
-            };
+  const toggleTaskStatus = async (taskId) => {
+    const taskToUpdate = tasks.find(t => t.id === taskId);
+    if (!taskToUpdate) return;
+
+    const newStatus = taskToUpdate.status === 'completed' ? 'incomplete' : 'completed';
+    
+    try {
+        const { error } = await supabase
+            .from('tasks')
+            .update({ status: newStatus, updated_at: new Date().toISOString() })
+            .eq('id', taskId);
+            
+        if (error) throw error;
+
+        setTasks(prev => prev.map(task => {
+            if (task.id === taskId) {
+                return { ...task, status: newStatus, updatedAt: new Date().toISOString() };
+            }
+            return task;
+        }));
+
+        if (newStatus === 'completed') {
+            showToast('Task completed!', 'success');
         }
-        return task;
-    });
-    saveTasksToStorage(updatedTasks);
-    if (status === 'completed') {
-        showToast('Task completed!', 'success');
+    } catch (error) {
+        console.error('Error toggling task status:', error);
+        showToast('Failed to update status', 'error');
     }
   };
 
   const getUserTasks = () => {
       if (!currentUser) return [];
-      let userTasks = tasks.filter(task => task.userId === currentUser.id);
+      
+      // Since we fetch only user's tasks in useEffect, 'tasks' is already filtered by user.
+      let filteredTasks = [...tasks];
 
-      // Apply filters
+      // Apply local filters
       if (filter.category !== 'all') {
-          userTasks = userTasks.filter(task => task.category === filter.category);
+          filteredTasks = filteredTasks.filter(task => task.category === filter.category);
       }
       if (filter.status !== 'all') {
-          userTasks = userTasks.filter(task => task.status === filter.status);
+          filteredTasks = filteredTasks.filter(task => task.status === filter.status);
       }
       if (filter.search) {
           const lowerSearch = filter.search.toLowerCase();
-          userTasks = userTasks.filter(task => 
-              task.title.toLowerCase().includes(lowerSearch) || 
-              task.description.toLowerCase().includes(lowerSearch)
+          filteredTasks = filteredTasks.filter(task => 
+              (task.title || '').toLowerCase().includes(lowerSearch) || 
+              (task.description || '').toLowerCase().includes(lowerSearch)
           );
       }
       
-      // Sort by due date by default or add sorting logic
-      userTasks.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+      // Sort locally (or could do via Supabase if we refetch)
+      filteredTasks.sort((a, b) => new Date(a.dueDate || a.due_date) - new Date(b.dueDate || b.due_date));
 
-      return userTasks;
+      return filteredTasks;
   };
 
   const getStats = () => {
       if (!currentUser) return { total: 0, completed: 0, pending: 0, overdue: 0 };
       
-      const userTasks = tasks.filter(task => task.userId === currentUser.id);
-      const total = userTasks.length;
-      const completed = userTasks.filter(t => t.status === 'completed').length;
+      const total = tasks.length;
+      const completed = tasks.filter(t => t.status === 'completed').length;
       const pending = total - completed;
-      const overdue = userTasks.filter(t => {
-          return new Date(t.dueDate) < new Date() && t.status !== 'completed';
+      const overdue = tasks.filter(t => {
+          const due = t.dueDate || t.due_date;
+          if (!due) return false;
+          return new Date(due) < new Date() && t.status !== 'completed';
       }).length;
 
       return { total, completed, pending, overdue };
@@ -143,6 +227,3 @@ export function TaskProvider({ children }) {
     </TaskContext.Provider>
   );
 }
-
-
-
