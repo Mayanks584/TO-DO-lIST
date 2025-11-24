@@ -39,53 +39,47 @@ We use GitHub issues to track public bugs. Report a bug by [opening a new issue]
 
 ## 🎨 Coding Style
 
-### JavaScript Style Guide
+### JavaScript/React Style Guide
 
+- **Use Functional Components** and Hooks for React
 - **Use 2 spaces** for indentation
 - **Use semicolons** at the end of statements
 - **Use camelCase** for variable and function names
-- **Use PascalCase** for class names
+- **Use PascalCase** for component names
 - **Use UPPER_CASE** for constants
 - **Add comments** for complex logic
 
-### HTML/CSS Style Guide
+### CSS Style Guide
 
 - **Use 2 spaces** for indentation
-- **Use lowercase** for HTML tags and attributes
+- **Use CSS Variables** for theming (defined in `index.css`)
 - **Use kebab-case** for CSS classes
 - **Group related CSS properties** together
 - **Use meaningful class names**
 
 ### Example Code Style
 
-```javascript
-// ✅ Good
-const taskManager = {
-  tasks: [],
-  
-  addTask(title, description) {
-    const newTask = {
-      id: Date.now(),
-      title: title.trim(),
-      description: description.trim(),
-      completed: false,
-      createdAt: new Date()
-    };
-    
-    this.tasks.push(newTask);
-    return newTask;
-  }
-};
+```jsx
+// ✅ Good Component
 
-// ❌ Bad
-const taskmanager={
-tasks:[],
-addtask:function(title,description){
-var newtask={id:Date.now(),title:title,description:description,completed:false}
-this.tasks.push(newtask)
-return newtask
-}
-}
+import React, { useState } from 'react';
+import { useTasks } from '../context/TaskContext';
+
+const TaskItem = ({ task }) => {
+  const { updateTask } = useTasks();
+  const [isEditing, setIsEditing] = useState(false);
+
+  const handleComplete = () => {
+    updateTask(task.id, { status: 'completed' });
+  };
+
+  return (
+    <div className="task-item">
+      <h3>{task.title}</h3>
+      <button onClick={handleComplete}>Done</button>
+    </div>
+  );
+};
 ```
 
 ## 🏗️ Development Setup
@@ -93,7 +87,7 @@ return newtask
 1. **Fork and clone the repository**
    ```bash
    git clone https://github.com/YOUR_USERNAME/TaskFlow.git
-   cd TaskFlow
+   cd TaskFlow/frontend
    ```
 
 2. **Install dependencies**
@@ -104,16 +98,12 @@ return newtask
 3. **Set up environment variables**
    ```bash
    cp .env.example .env
-   # Edit .env with your MongoDB connection string
+   # Edit .env with your Supabase URL and Anon Key
    ```
 
 4. **Start development server**
    ```bash
-   # For live server development
-   # Use VS Code "Go Live" extension
-   
-   # For full backend development
-   node server/server.js
+   npm run dev
    ```
 
 ## 🧪 Testing
@@ -122,17 +112,18 @@ return newtask
 
 Before submitting a PR, please test:
 
-- [ ] **User Registration** - New users can create accounts
+- [ ] **User Registration** - New users can create accounts via Supabase Auth
 - [ ] **User Login** - Existing users can log in
 - [ ] **Dashboard Access** - Authenticated users can access dashboard
-- [ ] **Task Management** - Users can create, edit, delete tasks
+- [ ] **Task CRUD** - Create, Read, Update, and Delete tasks works with Supabase
+- [ ] **Real-time Updates** - Changes reflect immediately
 - [ ] **Responsive Design** - App works on mobile and desktop
-- [ ] **Navigation** - All navigation links work correctly
 - [ ] **Form Validation** - Forms show appropriate error messages
 
 ### Browser Testing
 
 Please test your changes in:
+
 - ✅ Chrome (latest)
 - ✅ Firefox (latest)
 - ✅ Safari (latest)
@@ -152,11 +143,10 @@ We welcome feature requests! Please:
 Features we're planning to implement:
 
 - [ ] **Advanced Task Filtering** - Filter by date, priority, category
-- [ ] **Task Collaboration** - Share tasks with team members
+- [ ] **Task Collaboration** - Share tasks with team members (Supabase RLS updates needed)
 - [ ] **Task Templates** - Create reusable task templates
 - [ ] **Calendar Integration** - View tasks in calendar format
 - [ ] **Mobile App** - Native mobile applications
-- [ ] **API Documentation** - Complete REST API documentation
 - [ ] **Dark Mode** - Dark theme support
 - [ ] **Notifications** - Email and push notifications
 
@@ -167,6 +157,7 @@ By contributing, you agree that your contributions will be licensed under the MI
 ## 🙏 Recognition
 
 Contributors will be recognized in:
+
 - 📋 README.md contributors section
 - 🎉 Release notes for significant contributions
 - 🏆 Special mentions for outstanding contributions
@@ -174,6 +165,7 @@ Contributors will be recognized in:
 ## 💬 Questions?
 
 Feel free to reach out:
+
 - 📧 Email: support@taskflow.com
 - 💬 GitHub Discussions: [TaskFlow Discussions](https://github.com/Mayanks584/TaskFlow/discussions)
 - 🐛 Issues: [GitHub Issues](https://github.com/Mayanks584/TaskFlow/issues)
